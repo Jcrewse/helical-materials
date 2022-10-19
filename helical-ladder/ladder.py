@@ -1,8 +1,5 @@
-from operator import length_hint
-from re import X
 import kwant
 import numpy as np
-import itertools
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import scipy.sparse.linalg as sla
@@ -20,10 +17,10 @@ hop_dict = {'t':0, 'v':1, 'w':2}
 
 def main():
 
-    #analyze_bandstructure_varyt()
-    #analyze_bandstructure_varyv()
-    #analyze_bandstructure_varyw()
-    #analyze_bandstructure_varyphi()
+    analyze_bandstructure_varyt()
+    analyze_bandstructure_varyv()
+    analyze_bandstructure_varyw()
+    analyze_bandstructure_varyphi()
 
     # Create a finite system to visualize the structure
     system = make_system(a=1, b=1, phi=np.pi/4, u=5, hops=(1,1,1), width=2, length=50).finalized()
