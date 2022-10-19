@@ -1,4 +1,5 @@
-
+# Data folders (no need to store on GitHub for now)
+**/data
 
 # Latex compilation files
 *.aux
@@ -9,3 +10,6 @@
 
 # Standard pycache
 *__pycache__
+
+# Misc
+*.DS_Store
