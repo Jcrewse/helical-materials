@@ -17,17 +17,17 @@ hop_dict = {'t':0, 'v':1, 'w':2}
 
 def main():
 
-    analyze_bandstructure_varyt()
-    analyze_bandstructure_varyv()
-    analyze_bandstructure_varyw()
-    analyze_bandstructure_varyphi()
+    #analyze_bandstructure_varyt()
+    #analyze_bandstructure_varyv()
+    #analyze_bandstructure_varyw()
+    #analyze_bandstructure_varyphi()
 
     # Create a finite system to visualize the structure
-    system = make_system(a=1, b=1, phi=np.pi/4, u=5, hops=(1,1,1), width=2, length=50).finalized()
+    system = make_system(a=1, b=1, phi=0, u=5, hops=(1,1,1), width=2, length=50).finalized()
     #plot_structure(system)
     #plot_spectrum(system, n_eigs=10)
-    #plot_wavefunction(system, n_eigs=10, plot_eigs=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    plot_spec_wave(system, n_eigs=10, plot_eigs=[0,1,2,3,4,5])
+    #plot_wavefunction(system, n_eigs=10, plot_eigs=[0, 1, 2, 3, 4])
+    plot_spec_prob(system, n_eigs=10, plot_eigs=[0,1,2,3,4,5])
     #translation(system)
 
     return
@@ -242,17 +242,19 @@ def plot_wavefunction(sys, n_eigs, plot_eigs):
     fig = plt.figure(figsize=(8,12))
     for n in plot_eigs:
         ax = fig.add_subplot(len(plot_eigs), 1, pos[n])
-        kwant.plotter.map(sys, np.abs(eigenvecs[:,n])**2, colorbar=True, ax=ax)
+        ax.plot(np.real(eigenvecs[::2,n]), label = r'$Re(\Psi)$')
+        ax.plot(np.imag(eigenvecs[::2,n]), label = r'$Im(\Psi)$')
 
-        ax.set_title(r'$|\Psi_{state}(x,y)|^2\quad \epsilon_{state}={energy}$'.format(state=n, energy=round(eigenvals[n],5)))
+        ax.set_title(r'$\Psi_{state}(x,0)\quad \epsilon_{state}={energy}$'.format(state=n, energy=round(eigenvals[n],5)))
         ax.set_xlabel(r'$x\:[a_{}]$'.format(0))
-        ax.set_ylabel(r'$y\:[a_{}]$'.format(0))
+        ax.set_ylabel(r'$\Psi$'.format(0))
 
+    plt.tight_layout()
     plt.show()
 
     return
 
-def plot_spec_wave(sys, n_eigs, plot_eigs):
+def plot_spec_prob(sys, n_eigs, plot_eigs):
 
     H_matrix = sys.hamiltonian_submatrix(sparse=True)
     eigenvals, eigenvecs = sorted_eigs(sla.eigsh(H_matrix.tocsc(), k=n_eigs, sigma=0))
@@ -260,9 +262,9 @@ def plot_spec_wave(sys, n_eigs, plot_eigs):
     colors = iter(cm.rainbow(np.linspace(0,1,n_eigs)))
     pos = range(1,len(plot_eigs)+1)
 
-    fig = plt.figure(figsize=(16,8))
+    fig = plt.figure(figsize=(16,10))
 
-    spec_ax = fig.add_subplot(1, 2, 1)
+    spec_ax = fig.add_subplot(1, 3, 1)
     for n in range(n_eigs):
         spec_ax.hlines(eigenvals[n], -1, 1, color=next(colors), label='n = ' + str(n))
 
@@ -271,13 +273,21 @@ def plot_spec_wave(sys, n_eigs, plot_eigs):
     spec_ax.legend()
 
     for n in reversed(plot_eigs):
-        wave_pos = 2*len(plot_eigs) - (pos[n] + n) + 1 # Complicated due to the way positions are indexed in subplots. Could be an easier way?
-        wave_ax = fig.add_subplot(len(plot_eigs), 2, wave_pos)
-        kwant.plotter.map(sys, np.abs(eigenvecs[:,n])**2, colorbar=True, ax=wave_ax)
+        wave_pos = 3*len(plot_eigs) - (pos[n] + 2*n)
+        wave_ax = fig.add_subplot(len(plot_eigs), 3, wave_pos)
+        wave_ax.plot(np.real(eigenvecs[::2, n]), label = r'$Re(\Psi)$')
+        wave_ax.plot(np.imag(eigenvecs[::2, n]), label = r'$Im(\Psi)$')
+        wave_ax.set_title(r'$\Psi_{}(x,0)$'.format(n))
+        wave_ax.set_xlabel(r'$x$')
+        wave_ax.set_xlim(0,np.size(eigenvecs[::2,n])-1)
 
-        wave_ax.set_title(r'$|\Psi_{state}(x,y)|^2\quad \epsilon_{state}={energy}$'.format(state=n, energy=round(eigenvals[n],5)))
-        wave_ax.yaxis.tick_right()
+        dens_pos = 3*len(plot_eigs) - (pos[n]+ 2*n) + 1# Complicated due to the way positions are indexed in subplots. Could be an easier way?
+        dens_ax = fig.add_subplot(len(plot_eigs), 3, dens_pos)
+        kwant.plotter.map(sys, np.abs(eigenvecs[:,n])**2, colorbar=True, ax=dens_ax)
+        dens_ax.set_title(r'$|\Psi_{state}(x,y)|^2\quad \epsilon_{state}={energy}$'.format(state=n, energy=round(eigenvals[n],5)))
+        dens_ax.yaxis.tick_right()
 
+    plt.tight_layout()
     plt.show()
 
     return
