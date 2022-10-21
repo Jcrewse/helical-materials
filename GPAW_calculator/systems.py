@@ -20,6 +20,8 @@ class create_system():
             self.sys = self.create_helical_hbn(angle)
         if tag == 'H2':
             self.sys = self.create_hydrogen_molecule()
+        if tag == 'C2H2':
+            self.sys = self.create_C2H2_chain(angle)
 
         self.e_fermi = 0
         self.e_ground = 0
@@ -346,6 +348,76 @@ class create_system():
                             pbc = (False, False, False))
 
         return h2_twisted
+
+    def create_C2H2_chain(self, angle):
+        '''
+        =======================================================================
+        Creates an infinite chain of C2H2 molecules
+        ------------------------------------------------
+        Description:
+            Creates and ase.Atoms object of the unit cell of an infinite chain
+            of C2H2 molecules. A twist angle along the z-axis is also
+            available. 
+
+        Args:
+            angle (float): Twist angle along the x-axis
+        =======================================================================
+        '''
+        # Hydrogen/Carbon position (from nist.gov data)
+        h0 = 1.6644
+        c0 = 0.6013
+        # layer bong length
+        l = 1.2026
+
+        # Number of layers in the unit cell
+        if angle == 0: 
+            N = 1
+        else:
+            N = int((2*np.pi)/angle)
+        print('Number of layers in unit cell: {}'.format(N))
+
+        # Unit cell sizes
+        a = N*l
+        b = 3
+        c = 3
+
+        # Brillouin zone path
+        self.k_path = 'GX'
+
+        # Band structure parameters
+        self.n_bands = 2*N
+        self.emin = -20
+        self.emax = 45
+
+        self.outname = 'C2H2-pi-{}_H{:3.2f}_C{:3.2f}_l{:3.2f}_a{:3.2f}_c{:3.2f}'.format(N,h0,c0,l,a,c)
+
+        # Create a generator of angles for producing atomic positions
+        angles = [n*angle for n in range(N)]
+
+        positions = []
+        atoms = []
+        for n, phi in enumerate(angles):
+            position_c1 = ((2*n+1)*(l/2),  c0*cos(phi) + (b/2),  c0*sin(phi) + (c/2))
+            position_c2 = ((2*n+1)*(l/2), -c0*cos(phi) + (b/2), -c0*sin(phi) + (c/2))
+            position_h1 = ((2*n+1)*(l/2),  h0*cos(phi) + (b/2),  h0*sin(phi) + (c/2))
+            position_h2 = ((2*n+1)*(l/2), -h0*cos(phi) + (b/2), -h0*sin(phi) + (c/2))
+            positions.append(position_c1)
+            atoms.append('C')
+            positions.append(position_c2)
+            atoms.append('C')
+            positions.append(position_h1)
+            atoms.append('H')
+            positions.append(position_h2)
+            atoms.append('H')
+
+        c2h2 = Atoms(atoms,
+                    positions = positions,
+                    cell = [(a, 0, 0),
+                            (0, b, 0),
+                            (0, 0, c)],
+                    pbc = (True, False, False))
+
+        return c2h2
 
     def create_hydrogen_molecule(self):
 

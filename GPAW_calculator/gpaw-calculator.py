@@ -6,23 +6,20 @@ from gpaw import GPAW, PW, FermiDirac
 
 def main():
 
-    h_step = 0.1
     params = {
     'xc'          : 'PBE',
     'h'           : 0.1,
-    'kpoints'     : (1,1,1),
+    'kpoints'     : (10,1,1),
     'random'      : True,
     'occupations' : FermiDirac(0.01),
     'convergence' : {'energy' : 0.0005}
     }
 
     # Create the system of interest
-    #system = systems.create_system('h-BN', layers = 2, stacking='AA')
-    #system = systems.create_system('H-chain', angle = 0)
-    system = systems.create_system('H2')
+    system = systems.create_system('helical-hBN', angle = np.pi/6)
 
     # User output of system for inspection
-    #system.view(range = (1,1,1))
+    system.view(range = (3,3,1))
 
     # Calculate the electronic ground state of the system
     if not os.path.isfile(system.outname + '_GS.gpw'):
@@ -31,12 +28,11 @@ def main():
        print('Restarting from: ' + system.outname)
        system.sys.calc = GPAW(system.outname + '_GS.gpw')
 
-
     # Calculate the groundstate wavefunction
-    calc_wavefunction(system, params)
+    #calc_wavefunction(system, params)
 
     # Calculate the band structure of the system, output
-    #calc_bandstructure(system)
+    calc_bandstructure(system)
 
     return
 
@@ -122,7 +118,6 @@ def calc_wavefunction(system, params):
 
     return
 
-
 def calc_bandstructure(system):
     '''
     ===========================================================================
@@ -172,9 +167,9 @@ def calc_bandstructure(system):
     # Plot configuration
     bs_ax.set_title(r'System: {}, $\epsilon_0 = {:3.2f}$eV, $\epsilon_F = {:3.2f}$eV'.format(system.tag, e_ground, e_fermi))
     bs_ax.set_ylabel(r'$\epsilon\; [eV]$')
-    bs_ax.set_ylim(system.emin, system.emax)
+    bs_ax.set_ylim(0.95*e_fermi, 1.05*e_fermi)
     dos_ax.set_xlabel(r'$D(\epsilon) \; (total)$')
-    dos_ax.set_ylim(system.emin,system.emax)
+    #dos_ax.set_ylim(system.emin,system.emax)
     dos_ax.set_xlim(0, 1.05*max(dos))
     dos_ax.yaxis.tick_right()
     dos_ax.yaxis.set_visible(False)
@@ -187,6 +182,5 @@ def calc_bandstructure(system):
 
     return
         
-
 if __name__ == '__main__':
     main()

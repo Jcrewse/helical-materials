@@ -20,7 +20,7 @@ def main():
     #analyze_bandstructure_varyt()
     #analyze_bandstructure_varyv()
     #analyze_bandstructure_varyw()
-    #analyze_bandstructure_varyphi()
+    analyze_bandstructure_varyphi()
 
     # Create a finite system to visualize the structure
     system = make_system(a=1, b=1, phi=0, u=5, hops=(1,1,1), width=2, length=50).finalized()
