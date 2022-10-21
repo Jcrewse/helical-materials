@@ -9,7 +9,7 @@ def main():
     params = {
     'xc'          : 'PBE',
     'h'           : 0.1,
-    'kpoints'     : (10,1,1),
+    'kpoints'     : (8,8,8),
     'random'      : True,
     'occupations' : FermiDirac(0.01),
     'convergence' : {'energy' : 0.0005}
