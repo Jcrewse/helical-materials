@@ -396,11 +396,17 @@ class create_system():
 
         positions = []
         atoms = []
+        double_cell = True
         for n, phi in enumerate(angles):
             position_c1 = ((2*n+1)*(l/2),  c0*cos(phi) + (b/2),  c0*sin(phi) + (c/2))
             position_c2 = ((2*n+1)*(l/2), -c0*cos(phi) + (b/2), -c0*sin(phi) + (c/2))
             position_h1 = ((2*n+1)*(l/2),  h0*cos(phi) + (b/2),  h0*sin(phi) + (c/2))
             position_h2 = ((2*n+1)*(l/2), -h0*cos(phi) + (b/2), -h0*sin(phi) + (c/2))
+            if double_cell:
+                position_c3 = ((2*n+3)*(l/2),  c0*cos(phi) + (b/2),  c0*sin(phi) + (c/2))
+                position_c4 = ((2*n+3)*(l/2), -c0*cos(phi) + (b/2), -c0*sin(phi) + (c/2))
+                position_h3 = ((2*n+3)*(l/2),  h0*cos(phi) + (b/2),  h0*sin(phi) + (c/2))
+                position_h4 = ((2*n+3)*(l/2), -h0*cos(phi) + (b/2), -h0*sin(phi) + (c/2))
             positions.append(position_c1)
             atoms.append('C')
             positions.append(position_c2)
@@ -409,6 +415,16 @@ class create_system():
             atoms.append('H')
             positions.append(position_h2)
             atoms.append('H')
+            if double_cell:
+                positions.append(position_c3)
+                atoms.append('C')
+                positions.append(position_c4)
+                atoms.append('C')
+                positions.append(position_h3)
+                atoms.append('H')
+                positions.append(position_h4)
+                atoms.append('H')
+                a = 2*a
 
         c2h2 = Atoms(atoms,
                     positions = positions,
