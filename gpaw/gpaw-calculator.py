@@ -1,3 +1,8 @@
+'''
+###############################################################################
+GPAW calculator
+###############################################################################
+'''
 import systems
 import matplotlib.pyplot as plt
 import os
@@ -6,26 +11,30 @@ from gpaw import GPAW, PW, FermiDirac
 
 def main():
 
+    # Default parameters for the ground state calculation
     params = {
-    'xc'          : 'PBE',
-    'kpoints'     : (8,1,1),
-    'random'      : True,
-    'occupations' : FermiDirac(0.01),
-    'convergence' : {'energy' : 0.0005}
+    'xc'          : 'PBE',                   # Exchange-correlation func. ID
+    'kpoints'     : (8,1,1),                 # k-points sampled in periodic sys
+    'random'      : True,                    # Random guess (of what?)
+    'occupations' : FermiDirac(0.01),        # Occupation number smearing
+    'convergence' : {'energy' : 0.0005}      # Convergence criteria
     }
 
     # Create the system of interest
-    system = systems.create_system('C2H2', angle = 0)
+    system = systems.create_system('C2H2-chain', angle=0, cell_size = 1)
 
     # User output of system for inspection
-    system.view(range = (4,1,1))
+    system.view(range = (1,1,1))
 
     # Calculate the electronic ground state of the system
     if not os.path.isfile(system.outname + '_GS.gpw'):
         calc_groundstate(system, params = params)
     else:
-       print('Restarting from: ' + system.outname)
-       system.sys.calc = GPAW(system.outname + '_GS.gpw')
+        print('Restarting from: ' + system.outname)
+        system.sys.calc = GPAW(system.outname + '_GS.gpw')
+        system.e_ground = system.sys.calc.get_potential_energy()
+        system.e_fermi  = system.sys.calc.get_fermi_level()
+
 
     # Calculate the groundstate wavefunction
     #calc_wavefunction(system, params)
@@ -48,8 +57,7 @@ def calc_groundstate(system, params):
     print('Calculating ground state...')
     
     # Set up GPAW calculator
-    calc = GPAW(mode = PW(500),
-                txt = log_outfile)
+    calc = GPAW(mode = PW(500), txt = log_outfile)
 
     calc.default_parameters = params
 
@@ -166,7 +174,7 @@ def calc_bandstructure(system):
     # Plot configuration
     bs_ax.set_title(r'System: {}, $\epsilon_0 = {:3.2f}$eV, $\epsilon_F = {:3.2f}$eV'.format(system.tag, e_ground, e_fermi))
     bs_ax.set_ylabel(r'$\epsilon\; [eV]$')
-    bs_ax.set_ylim(0, 30)
+    bs_ax.set_ylim(system.emin, system.emax)
     dos_ax.set_xlabel(r'$D(\epsilon) \; (total)$')
     #dos_ax.set_ylim(system.emin,system.emax)
     dos_ax.set_xlim(0, 1.05*max(dos))
