@@ -11,22 +11,22 @@ class create_system():
         self.tag = tag
 
         if tag == 'hBN':
-            self.sys = self.create_hbn(layers, stacking)
+            self.sys = self.create_hBN(layers, stacking)
+        if tag == 'helical-hBN':
+            self.sys = self.create_helical_hBN(angle)
         if tag == 'Si':
             self.sys = self.create_Si()
-        if tag == 'H-chain':
-            self.sys = self.create_hydro_chain(angle)
-        if tag == 'helical-hBN':
-            self.sys = self.create_helical_hbn(angle)
         if tag == 'H2':
-            self.sys = self.create_hydrogen_molecule()
+            self.sys = self.create_H2_molecule()
+        if tag == 'H2-chain':
+            self.sys = self.create_H2_chain(angle)
         if tag == 'C2H2':
             self.sys = self.create_C2H2_chain(angle)
 
         self.e_fermi = 0
         self.e_ground = 0
 
-    def create_hbn(self, layers=None, stacking='AA'):
+    def create_hBN(self, layers=None, stacking='AA'):
         '''
         =======================================================================
         Creates the hexagonal Boron Nitride system.
@@ -128,19 +128,20 @@ class create_system():
 
         return hbn
 
-    def create_helical_hbn(self, angle):
+    def create_helical_hBN(self, angle):
         '''
-        ===============================================================================
+        =======================================================================
         Create the hexagonal Boron Nitride system with a helical twist angle.
         ------------------------------------------
-        ===============================================================================           
+        =======================================================================           
         '''
         # Lattice constants (fixed)
         self.a = self.b = 1.42
         self.c = 6.709
 
         # Output file name
-        self.outname = 'helical-BN_ta{:3.2f}'.format(angle)
+        self.outname = 'helical-BN_ta{:3.2f}_a{:3.2f}_b{:3.2f}'\
+                       .format(angle, self.a, self.b)
 
         # Band structure parameters
         self.k_path = 'GMKGALH'
@@ -154,6 +155,7 @@ class create_system():
             print('Angle must be >0 for helical system')
             return
         n_layers = int(2*np.pi/angle)
+        n_layers = 2
         layer_angles = []
 
         a = self.a
@@ -162,7 +164,8 @@ class create_system():
         # Create supercell
         # Define unit cell of single layer
         lattice = sc.lattice()
-        lattice.set_vectors([3*a/2, a*sqrt(3)/2, 0], [3*a/2, -a*sqrt(3)/2, 0], [0, 0, c])
+        lattice.set_vectors([3*a/2, a*sqrt(3)/2, 0], [3*a/2, -a*sqrt(3)/2, 0],\
+                            [0, 0, c])
         lattice.add_atom("B", (0, 0, 0)).add_atom("N", (a, 0, 0))
         
         # Initialize heterostructure
@@ -171,7 +174,7 @@ class create_system():
         # Add layers 
         for n in range(n_layers-1):
             structure.add_layer(lattice)
-            layer_angle = n*angle
+            layer_angle = (n+1)*angle
             layer_angles.append([layer_angle])
 
         # Optimize supercell 
@@ -191,101 +194,7 @@ class create_system():
 
         return hbn
 
-
-        self.k_path = 'GX'
-
-        if htag == '1':
-            self.n_bands = 3
-
-
-            self.emin = -20
-            self.emax = 20
-
-            self.a = a = 2.0
-            self.b = b = 5
-            self.c = c = 5
-
-            self.outname = 'H-chain_a{:3.2f}_c{:3.2f}'.format(a,c)
-            h_chain = Atoms('H',
-                            positions = [(0.1, 0, 0)],
-                            cell = [(a, 0, 0),
-                                    (0, b, 0),
-                                    (0, 0, c)],
-                            pbc = (True, False, False))
-            return h_chain
-
-        if htag == '2':
-            self.n_bands = 3
-
-            self.emin = -20
-            self.emax = 45
-
-            self.a = a = 1.1
-            self.b = b = 15
-            self.c = c = 15
-
-            self.outname = 'H2-chain_a{:3.2f}_c{:3.2f}'.format(a,c)
-            h2_chain = Atoms('HH',
-                            positions = [(a/2, 0.4, 0),
-                                        (a/2, -0.4, 0)],
-                            cell = [(a, 0, 0),
-                                    (0, b, 0),
-                                    (0, 0, c)],
-                            pbc = (True, False, False))
-            return h2_chain
-
-        if htag == '22':
-            self.n_bands = 6
-
-            self.emin = -20
-            self.emax = 60
-
-            self.a = a = 2.0
-            self.b = b = 2
-            self.c = c = 2
-
-            self.outname = 'H22-chain_a{:3.2f}_c{:3.2f}'.format(a,c)
-            h22_chain = Atoms('HHHH',
-                            positions = [(0, 0.4, 0),
-                                        (0, -0.4, 0),
-                                        (a/2, 0.4, 0),
-                                        (a/2, -0.4, 0)],
-                            cell = [(a, 0, 0),
-                                    (0, b, 0),
-                                    (0, 0, c)],
-                            pbc = (True, False, False))
-            return h22_chain
-
-        if htag == 't':
-
-            # H-H bond length
-            d = 0.8
-
-            # H2-H2 bond length
-            l = 1.1
-
-            self.n_bands = 4
-
-            self.emin = -20
-            self.emax = 30
-
-            self.a = a = 2*l
-            self.b = b = 2
-            self.c = c = 2
-
-            self.outname = 'H2-pi-2_a{:3.2f}_c{:3.2f}'.format(a,c)
-            h2_twisted = Atoms('HHHH',
-                            positions = [(l/2, (d/2)+(b/2), c/2),
-                                        (l/2, -(d/2)+(b/2), c/2),
-                                        (3*l/2, b/2, -(d/2)+(c/2)),
-                                        (3*l/2, b/2,  (d/2)+(c/2))],
-                                cell = [(a, 0, 0),
-                                        (0, b, 0),
-                                        (0, 0, c)],
-                                pbc = (True, False, False))
-            return h2_twisted
-
-    def create_hydro_chain(self, angle):
+    def create_H2_chain(self, angle):
         '''
         =======================================================================
         Creates an infinite chain of Hydrogen molecules
@@ -389,9 +298,10 @@ class create_system():
         self.emin = -20
         self.emax = 45
 
-        self.outname = 'C2H2-pi-{}_H{:3.2f}_C{:3.2f}_l{:3.2f}_a{:3.2f}_c{:3.2f}'.format(N,h0,c0,l,a,c)
+        self.outname = 'C2H2-pi-{}_H{:3.2f}_C{:3.2f}_l{:3.2f}_a{:3.2f}_c{:3.2f}'\
+                       .format(N,h0,c0,l,a,c)
 
-        # Create a generator of angles for producing atomic positions
+        # Generator of angles for producing positions along twist axis
         angles = [n*angle for n in range(N)]
 
         positions = []
@@ -435,7 +345,7 @@ class create_system():
 
         return c2h2
 
-    def create_hydrogen_molecule(self):
+    def create_H2_molecule(self):
 
         d = 1.8 
         l = 3
@@ -497,3 +407,5 @@ class create_system():
         '''
 
         view(self.sys, repeat = range)
+
+        return
