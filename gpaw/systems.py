@@ -229,8 +229,9 @@ class create_system():
         c = 3
 
         # Brillouin zone path
-        self.k_path = 'GX'
         self.supercell_transform = [[N,0,0],[0,1,0],[0,0,1]]
+        self.n_band_points = 200
+        self.pbc = (True, False, False)
 
         # Band structure parameters
         self.n_bands = 2*N
@@ -258,7 +259,7 @@ class create_system():
                             cell = [(a, 0, 0),
                                     (0, b, 0),
                                     (0, 0, c)],
-                            pbc = (True, False, False))
+                            pbc = self.pbc)
 
         return h2_twisted
 
