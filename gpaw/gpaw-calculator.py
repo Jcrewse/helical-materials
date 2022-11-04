@@ -21,7 +21,7 @@ def main():
     }
 
     # Create the system of interest
-    system = systems.create_system('C2H2-chain', angle=0, cell_size = 1)
+    system = systems.create_system('H2-chain', angle=0, cell_size = 2)
 
     # User output of system for inspection
     system.view(range = (1,1,1))
@@ -57,7 +57,7 @@ def calc_groundstate(system, params):
     print('Calculating ground state...')
     
     # Set up GPAW calculator
-    calc = GPAW(mode = PW(500), txt = log_outfile)
+    calc = GPAW(txt = log_outfile)
 
     calc.default_parameters = params
 
@@ -65,8 +65,8 @@ def calc_groundstate(system, params):
     system.sys.calc = calc
 
     # Perform some calculations
-    E = system.e_ground = system.sys.get_potential_energy()
-    E_fermi = system.e_fermi = calc.get_fermi_level()
+    E       = system.e_ground = system.sys.get_potential_energy()
+    E_fermi = system.e_fermi  = calc.get_fermi_level()
 
     print('Ground state energy: {:3.4f} eV'.format(E))
     print('Fermi energy:        {:3.4f} eV'.format(E_fermi))
@@ -139,18 +139,19 @@ def calc_bandstructure(system):
     log_outfile  = system.outname + '_BS.log'
     json_outfile = system.outname + '_BS.json'
 
-    # Retrieve k path information for the system of interest
-    kpath = system.k_path
-    #nbands = system.n_bands
-
+    # Retrieve energies for reference points
     e_ground = system.e_ground
     e_fermi  = system.e_fermi
+
+    # Retrieve cell and find suitable band path from it
+    cell = system.sys.get_cell()
+    kpath = cell.bandpath(npoints = system.n_band_points, pbc = system.pbc)
 
     # Converge the band structure non self-consistently, with a fixed density
     print('Calculating band structure...')
     bs_calc = GPAW(gpw_infile).fixed_density(
         symmetry = 'off',
-        kpts = {'path':kpath, 'npoints': 500}, 
+        kpts = kpath, 
         convergence={'bands':'occupied'},
         txt = log_outfile)
 
