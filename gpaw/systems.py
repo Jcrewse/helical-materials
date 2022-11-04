@@ -7,7 +7,8 @@ from math import sqrt, sin, cos
 
 class create_system():
 
-    def __init__(self, tag, angle=None, layers=None, stacking=None):
+    def __init__(self, tag, angle=None, layers=None, stacking=None, 
+                 cell_size=None):
         self.tag = tag
 
         if tag == 'hBN':
@@ -19,9 +20,9 @@ class create_system():
         if tag == 'H2':
             self.sys = self.create_H2_molecule()
         if tag == 'H2-chain':
-            self.sys = self.create_H2_chain(angle)
-        if tag == 'C2H2':
-            self.sys = self.create_C2H2_chain(angle)
+            self.sys = self.create_H2_chain(angle, cell_size)
+        if tag == 'C2H2-chain':
+            self.sys = self.create_C2H2_chain(angle, cell_size)
 
         self.e_fermi = 0
         self.e_ground = 0
@@ -184,7 +185,7 @@ class create_system():
         print('Number of atoms in supercell: {}'.format(res.atom_count()))
 
         # Output superlattice as a POSCAR
-        res.superlattice().save_POSCAR(self.outname + '_POSCAR')
+        res.superlattice().save_POSCAR(self.outname + '.POSCAR')
 
         # Read POSCAR into Atoms object
         hbn = io.read(self.outname + '_POSCAR', format = 'vasp')
@@ -194,7 +195,7 @@ class create_system():
 
         return hbn
 
-    def create_H2_chain(self, angle):
+    def create_H2_chain(self, angle, cell_size):
         '''
         =======================================================================
         Creates an infinite chain of Hydrogen molecules
@@ -206,7 +207,8 @@ class create_system():
             Lattice parameters taken from R. Hoffman
 
         Args:
-            angle (float): Twist angle along the x-axis
+            angle   (float): Twist angle along the x-axis
+            cell_size (int): Number of unit cells to include in calculation
         =======================================================================
         '''
         # H-H bond length
@@ -216,10 +218,10 @@ class create_system():
 
         # Number of layers in the unit cell
         if angle == 0: 
-            N = 1
+            N = cell_size
         else:
-            N = int((2*np.pi)/angle)
-        print('Number of layers in unit cell: {}'.format(N))
+            N = int((np.pi)/angle)
+        print('Size of unit cell: {}'.format(N))
 
         # Unit cell sizes
         a = N*l
@@ -228,13 +230,15 @@ class create_system():
 
         # Brillouin zone path
         self.k_path = 'GX'
+        self.supercell_transform = [[N,0,0],[0,1,0],[0,0,1]]
 
         # Band structure parameters
         self.n_bands = 2*N
         self.emin = -20
         self.emax = 45
 
-        self.outname = 'H2-pi-{}_d{:3.2f}_l{:3.2f}_a{:3.2f}_c{:3.2f}'.format(N,d,l,a,c)
+        self.outname = 'H2-pi-{}_d{:3.2f}_l{:3.2f}_a{:3.2f}_c{:3.2f}'\
+                       .format(N,d,l,a,c)
 
         # Create a generator of angles for producing atomic positions
         angles = [n*angle for n in range(N)]
@@ -254,11 +258,11 @@ class create_system():
                             cell = [(a, 0, 0),
                                     (0, b, 0),
                                     (0, 0, c)],
-                            pbc = (False, False, False))
+                            pbc = (True, False, False))
 
         return h2_twisted
 
-    def create_C2H2_chain(self, angle):
+    def create_C2H2_chain(self, angle, cell_size):
         '''
         =======================================================================
         Creates an infinite chain of C2H2 molecules
@@ -269,7 +273,8 @@ class create_system():
             available. 
 
         Args:
-            angle (float): Twist angle along the x-axis
+            angle   (float): Twist angle along the x-axis
+            cell_size (int): Number of unit cells to consider in calculation.
         =======================================================================
         '''
         # Hydrogen/Carbon position (from nist.gov data)
@@ -280,23 +285,23 @@ class create_system():
 
         # Number of layers in the unit cell
         if angle == 0: 
-            N = 1
+            N = cell_size
         else:
-            N = int((2*np.pi)/angle)
+            N = int((np.pi)/angle)
         print('Number of layers in unit cell: {}'.format(N))
 
         # Unit cell sizes
         a = N*l
-        b = 3
-        c = 3
+        b = 5
+        c = 5
 
         # Brillouin zone path
         self.k_path = 'GX'
 
         # Band structure parameters
         self.n_bands = 2*N
-        self.emin = -20
-        self.emax = 45
+        self.emin = -25
+        self.emax = 50
 
         self.outname = 'C2H2-pi-{}_H{:3.2f}_C{:3.2f}_l{:3.2f}_a{:3.2f}_c{:3.2f}'\
                        .format(N,h0,c0,l,a,c)
@@ -306,17 +311,11 @@ class create_system():
 
         positions = []
         atoms = []
-        double_cell = True
         for n, phi in enumerate(angles):
             position_c1 = ((2*n+1)*(l/2),  c0*cos(phi) + (b/2),  c0*sin(phi) + (c/2))
             position_c2 = ((2*n+1)*(l/2), -c0*cos(phi) + (b/2), -c0*sin(phi) + (c/2))
             position_h1 = ((2*n+1)*(l/2),  h0*cos(phi) + (b/2),  h0*sin(phi) + (c/2))
             position_h2 = ((2*n+1)*(l/2), -h0*cos(phi) + (b/2), -h0*sin(phi) + (c/2))
-            if double_cell:
-                position_c3 = ((2*n+3)*(l/2),  c0*cos(phi) + (b/2),  c0*sin(phi) + (c/2))
-                position_c4 = ((2*n+3)*(l/2), -c0*cos(phi) + (b/2), -c0*sin(phi) + (c/2))
-                position_h3 = ((2*n+3)*(l/2),  h0*cos(phi) + (b/2),  h0*sin(phi) + (c/2))
-                position_h4 = ((2*n+3)*(l/2), -h0*cos(phi) + (b/2), -h0*sin(phi) + (c/2))
             positions.append(position_c1)
             atoms.append('C')
             positions.append(position_c2)
@@ -325,16 +324,6 @@ class create_system():
             atoms.append('H')
             positions.append(position_h2)
             atoms.append('H')
-            if double_cell:
-                positions.append(position_c3)
-                atoms.append('C')
-                positions.append(position_c4)
-                atoms.append('C')
-                positions.append(position_h3)
-                atoms.append('H')
-                positions.append(position_h4)
-                atoms.append('H')
-                a = 2*a
 
         c2h2 = Atoms(atoms,
                     positions = positions,
@@ -405,7 +394,8 @@ class create_system():
         -----------------------------------------------------------
         =======================================================================
         '''
-
+        
         view(self.sys, repeat = range)
+        #io.write(filename=self.outname + '.xyz', images = self.sys)
 
         return
