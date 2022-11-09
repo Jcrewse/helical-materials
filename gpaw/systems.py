@@ -238,7 +238,8 @@ class create_system():
         self.emin = -20
         self.emax = 45
 
-        self.outname = 'H2-pi-{}_d{:3.2f}_l{:3.2f}_a{:3.2f}_c{:3.2f}'\
+        data_dir = './gpaw/data/'
+        self.outname = data_dir + 'H2-pi-{}_d{:3.2f}_l{:3.2f}_a{:3.2f}_c{:3.2f}'\
                        .format(N,d,l,a,c)
 
         # Create a generator of angles for producing atomic positions
