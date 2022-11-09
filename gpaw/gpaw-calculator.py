@@ -58,6 +58,8 @@ def calc_groundstate(system, params):
     
     # Set up GPAW calculator
     calc = GPAW(txt = log_outfile)
+    #calc = GPAW(mode = 'lcao', basis = 'dzp', txt = log_outfile)
+    #calc = GPAW(mode = PW(1000), txt = log_outfile)
 
     calc.default_parameters = params
 
