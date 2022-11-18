@@ -14,6 +14,7 @@ def main():
     # Default parameters for the ground state calculation
     params = {
     'xc'          : 'PBE',                   # Exchange-correlation func. ID
+    'h'           : 0.1,
     'kpoints'     : (8,1,1),                 # k-points sampled in periodic sys
     'random'      : True,                    # Random guess (of what?)
     'occupations' : FermiDirac(0.01),        # Occupation number smearing
@@ -21,7 +22,7 @@ def main():
     }
 
     # Create the system of interest
-    system = systems.create_system('H2-chain', angle=0, cell_size = 2)
+    system = systems.create_system('H2-chain', angle = 0, cell_size = 1)
 
     # User output of system for inspection
     system.view(range = (1,1,1))
@@ -37,7 +38,7 @@ def main():
 
 
     # Calculate the groundstate wavefunction
-    #calc_wavefunction(system, params)
+    calc_wavefunction(system, params)
 
     # Calculate the band structure of the system, output
     calc_bandstructure(system)
@@ -83,6 +84,7 @@ def calc_wavefunction(system, params):
     # Retrieve pseudo wave functions from calculator
     # -------------------------------------------------------------------------
     wave_func = system.sys.calc.get_pseudo_wave_function(band=0)
+    print(np.shape(wave_func))
 
     # Calculate and normalize probability density
     # -------------------------------------------------------------------------
@@ -104,20 +106,21 @@ def calc_wavefunction(system, params):
 
     positions = system.sys.get_positions()
 
-    z_mid = int(z_points/2)
-    y_mid = int(y_points/2)
-    x_mid = int(x_points/2)
+    # Average over one axis
+    prob_xy = np.average(prob, axis=2)
+    prob_yz = np.average(prob, axis=0)
+    prob_zx = np.average(prob, axis=1)
 
-    fig, (ax_xy, ax_yz, ax_zx) = plt.subplots(3,1, figsize = (8,10))
+    fig, (ax_xy, ax_yz, ax_zx) = plt.subplots(3,1, figsize = (5,15))
     ax_xy.set_xlabel('x')
     ax_xy.set_ylabel('y')
-    ax_xy.contourf(x_grid, y_grid, prob[:][:][z_mid], levels = 20)
+    ax_xy.contourf(x_grid, y_grid, prob_xy, levels = 20)
     ax_yz.set_xlabel('y')
     ax_yz.set_ylabel('z')
-    ax_yz.contourf(y_grid, z_grid, prob[x_mid][:][:], levels = 20)
+    ax_yz.contourf(y_grid, z_grid, prob_yz, levels = 20)
     ax_zx.set_xlabel('z')
     ax_zx.set_ylabel('x')
-    ax_zx.contourf(z_grid, x_grid, prob[:][y_mid][:], levels = 20)
+    ax_zx.contourf(z_grid, x_grid, prob_zx, levels = 20)
     for pos in positions:
         ax_xy.scatter(pos[0]+h, pos[1]+h)
         ax_yz.scatter(pos[1]+h, pos[2]+h)
