@@ -1,72 +1,58 @@
 import kwant
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import scipy.sparse.linalg as sla
 from math import pi, cos
 
-# Conversion factors FROM SI TO ATOMIC
-# Parameters in the code are written in SI (energy = eV, length=angstrom, etc...)
-# Multiply written parameter by these to get atomic units (hbar = m = c = 1)
-CONVERT_HARTREE = (27.211386)**-1
-CONVERT_EV      = CONVERT_HARTREE**-1
-CONVERT_BOHR_R  = (0.529177)**-1
-CONVERT_ANGS    = CONVERT_BOHR_R**-1
 
 hop_dict = {'t':0, 'v':1, 'w':2}
 
 def main():
 
+    os.system('clear')
+
     #analyze_bandstructure_varyt()
     #analyze_bandstructure_varyv()
     #analyze_bandstructure_varyw()
-    analyze_bandstructure_varyphi()
+    #analyze_bandstructure_varyphi()
 
     # Create a finite system to visualize the structure
-    system = make_system(a=1, b=1, phi=0, u=5, hops=(1,1,1), width=2, length=50).finalized()
-    #plot_structure(system)
-    #plot_spectrum(system, n_eigs=10)
-    #plot_wavefunction(system, n_eigs=10, plot_eigs=[0, 1, 2, 3, 4])
-    plot_spec_prob(system, n_eigs=10, plot_eigs=[0,1,2,3,4,5])
-    #translation(system)
+    system = make_system(a = 1, b = 1, phi = 0, 
+                         u = 5, hops = (5,1,1), 
+                         width = 2, cell_scale = 2).finalized()
+
+    plot_band_state(system)
+    #plot_spec_prob(system, n_eigs=1, plot_eigs=[0])
 
     return
 
-def make_system(a, b, phi, u, hops, width, length=None):
+def make_system(a, b, phi, u, hops, width, length=None, cell_scale = 1):
 
     t, v, w = hops
 
-    # Perform the calculation in atomic units
-    u = u*CONVERT_HARTREE
-    t = t*CONVERT_HARTREE
-    v = v*CONVERT_HARTREE
-    w = w*CONVERT_HARTREE
-
-    a = a*CONVERT_BOHR_R
-    b = b*CONVERT_BOHR_R
-
-
-    lat = kwant.lattice.general([(b,0), (0,a)], norbs=1)
+    lat = kwant.lattice.general([(a,0), (0,b)], norbs=1)
 
     sys = kwant.Builder()
 
     if length is not None:
         # Create a finite sizes system to show structure
-        sys[lat.shape((lambda pos: (pos[1] >= 0 and pos[1] < a*width) and (pos[0] >= 0 and pos[0] < b*length)), (0,0))] = u
+        sys[lat.shape((lambda pos: (pos[1] >= 0 and pos[1] < b*width) and (pos[0] >= 0 and pos[0] < cell_scale*a*length)), (0,0))] = u
     else:
         # Create an infinite system for band structure calculations
-        sys = kwant.Builder(kwant.TranslationalSymmetry((b,0)))
-        sys[lat.shape((lambda pos: pos[1] >= 0 and pos[1] < a*width), (0,0))] = u
+        sys = kwant.Builder(kwant.TranslationalSymmetry((cell_scale*a,0)))
+        sys[lat.shape((lambda pos: pos[1] >= 0 and pos[1] < b*width), (0,0))] = u
 
     # Intra-layer hoppings
-    sys[kwant.builder.HoppingKind((0,1), lat, lat)]  = -t
+    sys[kwant.builder.HoppingKind((0,b), lat, lat)]  = -t
 
     # Inter-layer hoppings
-    sys[kwant.builder.HoppingKind((1,0), lat, lat)]  = -v*((0.5*a**2)*(1-cos(phi)) + b**2)**(-1)
+    sys[kwant.builder.HoppingKind((a,0), lat, lat)]  = -v*((0.5*a**2)*(1-cos(phi)) + b**2)**(-1)
 
     # Cross hoppings
-    sys[kwant.builder.HoppingKind((1,1), lat, lat)]  = -w*((0.5*a**2)*(1+cos(phi)) + b**2)**(-1)
-    sys[kwant.builder.HoppingKind((-1,1), lat, lat)] = -w*((0.5*a**2)*(1+cos(phi)) + b**2)**(-1)
+    sys[kwant.builder.HoppingKind((a,b), lat, lat)]  = -w*((0.5*a**2)*(1+cos(phi)) + b**2)**(-1)
+    sys[kwant.builder.HoppingKind((-a,b), lat, lat)] = -w*((0.5*a**2)*(1+cos(phi)) + b**2)**(-1)
 
     return sys
 
@@ -258,6 +244,15 @@ def plot_spec_prob(sys, n_eigs, plot_eigs):
 
     H_matrix = sys.hamiltonian_submatrix(sparse=True)
     eigenvals, eigenvecs = sorted_eigs(sla.eigsh(H_matrix.tocsc(), k=n_eigs, sigma=0))
+
+    k = np.pi/4
+    r = np.linspace(0, 100, 100)
+
+    u_nk = []
+    for i in range(n_eigs):
+        u_nk.append(eigenvecs[::2, i]*np.exp(-1j*k*r))
+
+    u_nk = np.array(u_nk)
     
     colors = iter(cm.rainbow(np.linspace(0,1,n_eigs)))
     pos = range(1,len(plot_eigs)+1)
@@ -277,6 +272,7 @@ def plot_spec_prob(sys, n_eigs, plot_eigs):
         wave_ax = fig.add_subplot(len(plot_eigs), 3, wave_pos)
         wave_ax.plot(np.real(eigenvecs[::2, n]), label = r'$Re(\Psi)$')
         wave_ax.plot(np.imag(eigenvecs[::2, n]), label = r'$Im(\Psi)$')
+        wave_ax.plot(np.imag(u_nk[n,:]), label = r'$Re(\Psi)$')
         wave_ax.set_title(r'$\Psi_{}(x,0)$'.format(n))
         wave_ax.set_xlabel(r'$x$')
         wave_ax.set_xlim(0,np.size(eigenvecs[::2,n])-1)
@@ -290,15 +286,93 @@ def plot_spec_prob(sys, n_eigs, plot_eigs):
     plt.tight_layout()
     plt.show()
 
+    return       
+
+def plot_band_state(sys):
+
+    # What states to plot, momenta to choose from. Likely function parameters soon
+    states = [0,1,2]
+    state_momenta = [0,pi/4,pi/2,3*pi/4,pi]
+    
+    '''Retrieve positon/wavevector parameters'''
+    # Extract site positions from system
+    # Only the first half of the sites are in the 'fundamental domain'
+    # Width is the number of y-values
+    # Momenta in the first BZ are |k| < pi/b
+    pos = np.array([site.pos for site in sys.sites])
+    pos = pos[:len(pos)//2]     
+    kx = state_momenta[4]
+
+
+    '''Start the figure for band structure and eigenstates'''
+    # Create band structure subplots
+    # Add subplot in a 1 row, 2 column config. band_ax is axis 1 (counting from top left)
+    # Initialize color interator (different color for each plotted eigenstate)
+    fig = plt.figure(figsize=(10,int(len(states)/2)+6))
+    band_ax = fig.add_subplot(1,2,1) 
+    colors = iter(cm.rainbow(np.linspace(0,1,len(states))))
+
+
+    '''Calculate band energies and momenta'''
+    # Create a physic.Bands instance from the system
+    # Define momenta for |k| < pi
+    # Calculate eigenenergies by calling bands instance
+    bands = kwant.physics.Bands(sys)
+    momenta = np.linspace(0, pi, 100)
+    energies = [bands(k) for k in momenta]
+
+
+    '''Plot band structure on band_ax'''
+    band_ax.plot(momenta, energies, color = 'k')
+    band_ax.set_xlim(0,pi)
+    band_ax.set_ylabel(r'$\epsilon(k)$')
+    band_ax.set_xlabel(r'$k$')
+
+
+    '''Plot range of eigenstates on state_ax'''
+    # Calculate eigvals/vecs from bands instance 
+    for n in states:
+
+        # Retrieve eigvals/vecs from bands instance
+        # eigvals = E_n(k_x)
+        # eigvecs = u_{n,k_x}(0,y)
+        eigvals, eigvecs  = bands(kx, return_eigenvectors=True)
+
+        N = 10
+        # Repeat u_nk in x-direction N times
+        u_nk = []
+        for _ in range(N): 
+            u_nk.append(eigvecs[n,:])
+        u_nk = np.array(u_nk)
+        print('u_nk shape: ' + str(np.shape(u_nk)))
+
+        # Calculate psi by modulating u_nk with plane wave
+        psi = []
+        for xi in range(N):
+            psi.append(np.exp(1j*kx*xi)*u_nk[xi,:])
+        psi = np.array(psi)
+        print(r"$\Psi$ shape: " + str(np.shape(psi)))
+
+        # Print some user output
+        print("Momenta: kx = {:3.5f}".format(kx))
+
+        # Iterate to next color for each plotted state
+        color = next(colors)
+
+        # Plot eigenstates on the state_ax
+        # Mark the corresponding E_n(k) on band_ax
+        # Plot \Psi_{nk}(y) on state_ax
+        state_ax = fig.add_subplot(len(states), 2, 2*len(states) - 2*n)
+        band_ax.scatter(kx, eigvals[n], color = color, zorder = 2, clip_on = False)
+        state_ax.imshow(psi.real.transpose())
+        state_ax.set_title('$\Psi_{}(x,y)$'.format(n), fontdict = {'color': color})
+        state_ax.set_xlabel('x')
+        state_ax.set_ylabel('y')
+        state_ax.yaxis.tick_right()
+
+    plt.show()
+
     return
-
-def translation(sys):
-
-    H_matrix = sys.hamiltonian_submatrix(sparse=True)
-    eigenvals, eigenvecs = sorted_eigs(sla.eigsh(H_matrix.tocsc(), k=5, sigma=0))
-    print(np.shape(eigenvecs))
-
-    return            
 
 def sorted_eigs(ev):
     evals, evecs = ev
