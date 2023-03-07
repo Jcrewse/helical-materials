@@ -1,52 +1,55 @@
-import kwant
 import numpy as np
-from math import cos
+import kwant
 
 # Define the system Hamiltonian
 # -----------------------------------------------------------------------------
-def hamiltonian(a, b, width, hops, phi, N_phi = 1, finite = False):
+def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
+                n_phi = 1, finite = False, output=False):
+    """Returns the kwant.Builder object of the helical ladder system."""
 
     # Unpack the hoppings tuple
-    u, t, v, w = hops
+    on_site_pot, intra_hop, inter_hop, cross_hop = hops
 
     # Define the lattice
-    lat_vecs = [(a,0), (0,b)]
+    lat_vecs = [(lat_const_a,0), (0,lat_const_b)]
     lat = kwant.lattice.general(lat_vecs, norbs=1)
 
     # Define Hamiltonian
-    sys = kwant.Builder()
+    sys = kwant.Builder
     if finite:
-        # Create a finite sizes system to show structure
-        sys[lat.shape((lambda pos: (pos[1] >= 0 and pos[1] < b*width) 
-                       and (pos[0] >= 0 and pos[0] < N_phi*a)), (0,0))] = u
+        sys[lat.shape((lambda pos: (pos[1] >= 0 and pos[1] < lat_const_b*width) 
+                       and (pos[0] >= 0 and pos[0] < n_phi*lat_const_a)), (0,0))] = on_site_pot
     else:
-        # Create an infinite system for band structure calculations
-        sys = kwant.Builder(kwant.TranslationalSymmetry((N_phi*a,0)))
-        sys[lat.shape((lambda pos: (pos[1] >= 0 and pos[1] < b*width) 
-                       and (pos[0] >= 0 and pos[0] < N_phi*a)), (0,0))] = u
+        sys = kwant.builder.Builder(kwant.lattice.TranslationalSymmetry((n_phi*lat_const_a,0)))
+        sys[lat.shape((lambda pos: (pos[1] >= 0 and pos[1] < lat_const_b*width)
+                       and (pos[0] >= 0 and pos[0] < n_phi*lat_const_a)), (0,0))] = on_site_pot
 
     # Intra-layer hoppings
-    sys[kwant.builder.HoppingKind((0,1), lat, lat)]  = -t
+    sys[kwant.builder.HoppingKind((0,1), lat, lat)]  = -intra_hop
 
     # Inter-layer hoppings
-    l_v = (0.5*a**2)*(1-np.cos(phi)) + b**2 # Modulate hopping by geometric distance due to phi
-    sys[kwant.builder.HoppingKind((1,0), lat, lat)]  = -v*np.exp(-1j*phi)/l_v
+    l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
+    sys[kwant.builder.HoppingKind((1,0), lat, lat)]   = -inter_hop*np.exp(-1j*phi)/l_v
+    sys[kwant.builder.HoppingKind((-1,0), lat, lat)]  = -inter_hop*np.exp(1j*phi)/l_v
 
     # Cross hoppings
-    l_u = (0.5*a**2)*(1+np.cos(phi)) + b**2
-    sys[kwant.builder.HoppingKind((1,1), lat, lat)]  = -w*np.exp(-1j*phi)/l_u
-    sys[kwant.builder.HoppingKind((-1,1), lat, lat)] = -w*np.exp(-1j*phi)/l_u
+    l_u = (0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
+    sys[kwant.builder.HoppingKind((1,1), lat, lat)]  = -cross_hop*np.exp(-1j*(phi))/l_u
+    sys[kwant.builder.HoppingKind((-1,1), lat, lat)] = -cross_hop*np.exp(1j*(phi))/l_u
 
-    # Output 
-    print('========== Hamiltonian initialized ==========')
-    print('Lattice constants: a = {}, b = {}'.format(a, b))
-    print('Finite width = {}'.format(width))
-    print('Hoppings: u = {}, t = {}, v = {}, w = {}'.format(u,t,v,w))
-    if (N_phi==1): print('Twist angle: phi = 0')
-    if (N_phi>1): print('Twist angle: phi = {}'.format(round(phi,3)))
-    print('---------- Hamiltonian matrix ----------')
-    print('H = \n' + str(sys.finalized().hamiltonian_submatrix()))
-    print('H_cell = \n' + str(sys.finalized().cell_hamiltonian()))
-    print('H_inter_cell = \n' + str(sys.finalized().inter_cell_hopping()))
+    # Output
+    if output:
+        print('========== Hamiltonian initialized ==========')
+        print(f'Lattice constants: a = {lat_const_a}, b = {lat_const_b}')
+        print(f'Finite width = {width}')
+        print(f'Hoppings: u = {on_site_pot}, t = {intra_hop}, v = {inter_hop}, w = {cross_hop}')
+        if n_phi==1:
+            print('Twist angle: phi = 0')
+        if n_phi>1:
+            print(f'Twist angle: phi = {phi}')
+        print('---------- Hamiltonian matrix ----------')
+        print('H = \n' + str(sys.finalized().hamiltonian_submatrix()))
+        print('H_cell = \n' + str(sys.finalized().cell_hamiltonian()))
+        print('H_inter_cell = \n' + str(sys.finalized().inter_cell_hopping()))
 
     return sys
