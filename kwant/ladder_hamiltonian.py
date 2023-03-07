@@ -30,13 +30,15 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
     # Inter-layer hoppings
     l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
     sys[kwant.builder.HoppingKind((1,0), lat, lat)]   = -inter_hop*np.exp(-1j*phi)/l_v
-    sys[kwant.builder.HoppingKind((-1,0), lat, lat)]  = -inter_hop*np.exp(1j*phi)/l_v
+    #sys[kwant.builder.HoppingKind((-1,0), lat, lat)]  = -inter_hop*np.exp(1j*phi)/l_v
 
     # Cross hoppings
     l_u = (0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
-    sys[kwant.builder.HoppingKind((1,1), lat, lat)]  = -cross_hop*np.exp(-1j*(phi))/l_u
-    sys[kwant.builder.HoppingKind((-1,1), lat, lat)] = -cross_hop*np.exp(1j*(phi))/l_u
-
+    sys[kwant.builder.HoppingKind((1,1), lat, lat)]   = -cross_hop*np.exp(-1j*(phi))/l_u
+    #sys[kwant.builder.HoppingKind((1,-1), lat, lat)]  = -cross_hop*np.exp(-1j*(phi))/l_u
+    sys[kwant.builder.HoppingKind((-1,1), lat, lat)]  = -cross_hop*np.exp(1j*(phi))/l_u
+    #sys[kwant.builder.HoppingKind((-1,-1), lat, lat)] = -cross_hop*np.exp(1j*(phi))/l_u
+    
     # Output
     if output:
         print('========== Hamiltonian initialized ==========')
