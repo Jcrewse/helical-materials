@@ -1,5 +1,6 @@
 import numpy as np
 import kwant
+from math import cos, sin
 
 # Define the system Hamiltonian
 # -----------------------------------------------------------------------------
@@ -23,13 +24,25 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
         # System is translationally symmetric for n_phi layers
         sys = kwant.builder.Builder(kwant.lattice.TranslationalSymmetry((n_phi*lat_const_a,0)))
         
-        # On-site potential the same for each lattie site on the ladder
-        sys[lat.shape((lambda pos: (pos[1] >= 0 and pos[1] < lat_const_b*width)
-                       and (pos[0] >= 0 and pos[0] < n_phi*lat_const_a)), (0,0))] = on_site_pot
+        # H_11
+        H_11 = cos(phi)*(intra_hop*sin(phi) + on_site_pot*cos(phi)) \
+                        + sin(phi)*(intra_hop*cos(phi) + on_site_pot*sin(phi))
+        H_22 = cos(phi)*(on_site_pot*cos(phi) - intra_hop*sin(phi)) \
+                        + sin(phi)*(on_site_pot*sin(phi) - intra_hop*cos(phi))
+        sys[lat(0,0)] = H_11
+        sys[lat(0,1)] = H_22
 
     # Intra-layer hoppings
-    sys[kwant.builder.HoppingKind((0,1), lat, lat)]  = -intra_hop
-
+    # H_12
+    H_12 = sin(phi)*(intra_hop*sin(phi) + on_site_pot*cos(phi)) \
+            - cos(phi)*(intra_hop*cos(phi) + on_site_pot*sin(phi))
+    sys[kwant.builder.HoppingKind((0,1), lat, lat)] = H_12
+            
+    # H_21
+    H_21 = cos(phi)*(on_site_pot*sin(phi) - intra_hop*cos(phi)) \
+            - sin(phi)*(on_site_pot*cos(phi) - intra_hop*sin(phi))
+    sys[kwant.builder.HoppingKind((0,-1), lat, lat)] = H_21
+    
     # Inter-layer hoppings
     l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
     sys[kwant.builder.HoppingKind((1,0), lat, lat)]   = -inter_hop/l_v
