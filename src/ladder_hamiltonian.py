@@ -29,8 +29,9 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
                         + sin(phi)*(intra_hop*cos(phi) + on_site_pot*sin(phi))
         H_22 = cos(phi)*(on_site_pot*cos(phi) - intra_hop*sin(phi)) \
                         + sin(phi)*(on_site_pot*sin(phi) - intra_hop*cos(phi))
-        sys[lat(0,0)] = H_11
-        sys[lat(0,1)] = H_22
+        for i in range(n_phi):
+            sys[lat(i,0)] = H_11
+            sys[lat(i,1)] = H_22
 
     # Intra-layer hoppings
     # H_12
@@ -44,16 +45,17 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
     sys[kwant.builder.HoppingKind((0,-1), lat, lat)] = H_21
     
     # Inter-layer hoppings
-    l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
+    l_v = 1#(0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
     sys[kwant.builder.HoppingKind((1,0), lat, lat)]   = -inter_hop/l_v
 
     # Cross hoppings
-    l_u = (0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
+    l_u = 1#(0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
     sys[kwant.builder.HoppingKind((1,1), lat, lat)]   = -cross_hop/l_u
     sys[kwant.builder.HoppingKind((-1,1), lat, lat)]  = -cross_hop/l_u
     
     # Output
     if output:
+        np.set_printoptions(linewidth=150)
         print('========== Hamiltonian initialized ==========')
         print(f'Lattice constants: a = {lat_const_a}, b = {lat_const_b}')
         print(f'Finite width = {width}')
@@ -63,7 +65,7 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
         if n_phi>1:
             print(f'Twist angle: phi = {phi}')
         print('---------- Hamiltonian matrix ----------')
-        print('H = \n' + str(np.matrix(sys.finalized().hamiltonian_submatrix())))
+        print('H = \n' + str(sys.finalized().hamiltonian_submatrix()))
         print('H_cell = \n' + str(sys.finalized().cell_hamiltonian()))
         print('H_inter_cell = \n' + str(sys.finalized().inter_cell_hopping()))
 
