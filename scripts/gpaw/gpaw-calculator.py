@@ -3,7 +3,7 @@
 GPAW calculator
 ###############################################################################
 '''
-import systems
+import src.systems as systems
 import matplotlib.pyplot as plt
 import os
 import numpy as np
@@ -14,7 +14,7 @@ def main():
     # Default parameters for the ground state calculation
     params = {
     'xc'          : 'PBE',                   # Exchange-correlation func. ID
-    'h'           : 0.1,
+    'h'           : 0.1,                     # Spatial grid size
     'kpoints'     : (8,1,1),                 # k-points sampled in periodic sys
     'random'      : True,                    # Random guess (of what?)
     'occupations' : FermiDirac(0.01),        # Occupation number smearing
@@ -22,7 +22,7 @@ def main():
     }
 
     # Create the system of interest
-    system = systems.create_system('H2-chain', angle = 0, cell_size = 1)
+    system = systems.create_system('H2-chain', angle = np.pi/3, cell_size = 1)
 
     # User output of system for inspection
     system.view(range = (1,1,1))
@@ -38,7 +38,7 @@ def main():
 
 
     # Calculate the groundstate wavefunction
-    calc_wavefunction(system, params)
+    #calc_wavefunction(system, params)
 
     # Calculate the band structure of the system, output
     calc_bandstructure(system)
@@ -190,9 +190,8 @@ def calc_bandstructure(system):
 
     # Save figure and show
     plt.savefig(png_outfile)
-    plt.show()
-
-
+    #plt.show()
+    
     return
         
 if __name__ == '__main__':

@@ -1,0 +1,9 @@
+Doing a molecular calculation.
+Read: 4 atoms
+ERROR: Can't open parameter file: /Users/runner/miniforge3/conda-bld/yaehmop_1658385440638/work/tightbind/eht_parms.dat using default data in eht_parms.h....
+Completed parameter acquisition.
+There are 4 orbitals in the unit cell.
+Allocating approximately     0.75 Kbytes (    0.00 Meg).
+Each matrix is:     0.00 meg.
+Error value from Diagonalization (0 is good): 0
+Done!

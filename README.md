@@ -1,8 +1,8 @@
-# Helical Materals
-Codes for invectigating and simulating helical materials. 
+# Helical Materials
+Investigating nanoscale materials with helical symmetry via tight-binding and DFT simulation.
 
 # kwant
 Tight-binding simulation 1D chains of atoms featuring a twist angle. 
 
 # GPAW
-Simple GPAW implementation of helical systems. 
+GPAW implementation of helical systems. 

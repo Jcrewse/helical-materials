@@ -1,11 +1,13 @@
 # Data folders (no need to store on GitHub for now)
-**/data
+data
 
 # Latex compilation files
 *.aux
 *.fdb_latexmk
 *.fls
 *.log
+*.pdf
+*.tex
 *.synctex.gz
 
 # Standard pycache

@@ -213,6 +213,7 @@ class create_system():
         '''
         # H-H bond length
         d = 0.8
+
         # H2-H2 bong length
         l = 1.1
 
