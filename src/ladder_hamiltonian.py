@@ -24,14 +24,22 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
         # System is translationally symmetric for n_phi layers
         sys = kwant.builder.Builder(kwant.lattice.TranslationalSymmetry((n_phi*lat_const_a,0)))
         
-        # H_11
-        H_11 = cos(phi)*(intra_hop*sin(phi) + on_site_pot*cos(phi)) \
-                        + sin(phi)*(intra_hop*cos(phi) + on_site_pot*sin(phi))
-        H_22 = cos(phi)*(on_site_pot*cos(phi) - intra_hop*sin(phi)) \
-                        + sin(phi)*(on_site_pot*sin(phi) - intra_hop*cos(phi))
+        H_molecule = [[on_site_pot, -intra_hop]m[-intra_hop, on_site_pot]]
+        rot_matrix = [[cos(phi), -sin(phi)],[sin(phi), cos(phi)]]
+        
         for i in range(n_phi):
-            sys[lat(i,0)] = H_11
-            sys[lat(i,1)] = H_22
+            # Rotate the molecular Hamiltonian
+            # For each layer in the unit cell we perform the unitary transformation
+            # H --> RHR^+
+            # This transformation is applied each layer so that after 
+            # n_phi layers we have
+            # H --> R^{n_phi}HR^{+ n_phi}
+            rot_matrix_dagger = np.transpose(rot_matrix)
+            H_rotated = np.matmul(H_molecule, rot_matrix_dagger)
+            H_rotated = np.matmul(rot_matrix, H_rotated)
+            
+            sys[lat(i,0)] = H_rotated[0,0]
+            sys[lat(i,1)] = H_rotated[1,1]
 
     # Intra-layer hoppings
     # H_12
@@ -45,11 +53,11 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
     sys[kwant.builder.HoppingKind((0,-1), lat, lat)] = H_21
     
     # Inter-layer hoppings
-    l_v = 1#(0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
+    l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
     sys[kwant.builder.HoppingKind((1,0), lat, lat)]   = -inter_hop/l_v
 
     # Cross hoppings
-    l_u = 1#(0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
+    l_u = (0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
     sys[kwant.builder.HoppingKind((1,1), lat, lat)]   = -cross_hop/l_u
     sys[kwant.builder.HoppingKind((-1,1), lat, lat)]  = -cross_hop/l_u
     
