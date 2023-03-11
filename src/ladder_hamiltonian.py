@@ -24,7 +24,7 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
         # System is translationally symmetric for n_phi layers
         sys = kwant.builder.Builder(kwant.lattice.TranslationalSymmetry((n_phi*lat_const_a,0)))
         
-        H_molecule = [[on_site_pot, -intra_hop]m[-intra_hop, on_site_pot]]
+        H_molecule = [[on_site_pot, -intra_hop],[-intra_hop, on_site_pot]]
         rot_matrix = [[cos(phi), -sin(phi)],[sin(phi), cos(phi)]]
         
         for i in range(n_phi):
