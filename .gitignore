@@ -1,19 +1,9 @@
 # Data folders (no need to store on GitHub for now)
 data
 
-# Latex compilation files
-*.aux
-*.fdb_latexmk
-*.fls
-*.log
-*.pdf
-*.tex
-*.synctex.gz
-
 # Standard pycache
 *__pycache__
 
 # Misc
-*.DS_Store
 *.vscode
-**/playgrounds
+
