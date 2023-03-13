@@ -26,7 +26,7 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
     rot_matrix = [[cos(phi), -sin(phi)],[sin(phi), cos(phi)]]
     rot_matrix_dagger = np.transpose(rot_matrix)
     
-    H_rotated = H_molecule
+    H_rotated = np.array(H_molecule)
     for n in range(n_phi):
         # Rotate the molecular Hamiltonian
         # For each layer in unit cell, perform the unitary transformation
@@ -35,23 +35,24 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
         # n_phi layers we have
         # H --> R^{n_phi}HR^{+ n_phi}
         print(f'Layer = {n}')
-        print(f'H_molecule = {H_molecule}')
+        print(f'H_molecule = \n {H_molecule}')
         # Raise rotation matrices to appropriate power
-        R  = np.linalg.matrix_power(rot_matrix, n)
-        RT = np.linalg.matrix_power(rot_matrix_dagger, n) 
+        #R  = np.linalg.matrix_power(rot_matrix, n)
+        #RT = np.linalg.matrix_power(rot_matrix_dagger, n)
         
         # Carry out the unitary transformation
-        H_rotated = np.matmul(H_rotated, RT)
-        H_rotated = np.matmul(R, H_rotated)
+        if n >= 1:
+            H_rotated = np.matmul(H_rotated, rot_matrix_dagger)
+            H_rotated = np.matmul(rot_matrix, H_rotated)
         print(f'H_rot = \n {H_rotated}')
         
         # On-site pot in each layer set to diagonal terms 
         sys[lat(n,0)] = H_rotated[0,0]
         sys[lat(n,1)] = H_rotated[1,1]
-
+        
         # Intra-layer hoppings in each layer set as off-diagonals
-        sys[kwant.builder.HoppingKind((n,1), lat, lat)] = H_rotated[0,1]
-        sys[kwant.builder.HoppingKind((n,-1), lat, lat)] = H_rotated[1,0]
+        sys[lat(n,0), lat(n,1)] = H_rotated[0,1]
+        sys[lat(n,1), lat(n,0)] = H_rotated[1,0]
     
     # Inter-layer hoppings
     l_v = 1#(0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
