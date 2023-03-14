@@ -1,6 +1,12 @@
 # Data folders (no need to store on GitHub for now)
 data
 
+# Figures
+*.png
+
+# log files
+*.log
+
 # Standard pycache
 *__pycache__
 
