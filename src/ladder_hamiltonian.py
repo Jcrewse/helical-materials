@@ -2,7 +2,7 @@ import numpy as np
 import kwant
 from math import cos, sin
 
-def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,5), phi = 0,
+def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10), phi = 0,
                 n_phi = 1, output=False):
     """Returns the kwant.Builder object of the helical ladder system with the
     twist angle implemented as a unitary transformation of the molecular 
@@ -50,11 +50,11 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,5)
         sys[lat(n,1), lat(n,0)] = H_rotated[1,0]
     
     # Inter-layer hoppings
-    l_v = 1#(0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
+    l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
     sys[kwant.builder.HoppingKind((1,0), lat, lat)]   = -inter_hop/l_v
 
     # Cross hoppings
-    l_u = 1#(0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
+    l_u = (0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
     sys[kwant.builder.HoppingKind((1,1), lat, lat)]   = -cross_hop/l_u
     sys[kwant.builder.HoppingKind((-1,1), lat, lat)]  = -cross_hop/l_u
     
@@ -80,8 +80,8 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,5)
 ###############################################################################
 ###############################################################################
 
-def old_hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
-                n_phi = 1, finite = False, output=False):
+def old_hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,24,10,10), phi = 0,
+                    n_phi = 1, finite = False, output=False):
     """Returns the kwant.Builder object of the helical ladder system based with
     twist angle implemented as simple geometric modulation of the hoppings."""
 
