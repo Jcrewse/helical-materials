@@ -60,7 +60,7 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,5)
     
     # Output
     if output:
-        np.set_printoptions(linewidth=200)
+        np.set_printoptions(linewidth=500)
         print('========== Hamiltonian initialized ==========')
         print(f'Lattice constants: a = {lat_const_a}, b = {lat_const_b}')
         print(f'Finite width = {width}')
