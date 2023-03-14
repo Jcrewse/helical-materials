@@ -22,10 +22,10 @@ def main():
     }
 
     # Create the system of interest
-    system = systems.create_system('H2-chain', angle = np.pi/3, cell_size = 1)
+    system = systems.create_system('H2-chain', angle = 0, cell_size = 1)
 
     # User output of system for inspection
-    system.view(range = (1,1,1))
+    #system.view(range = (1,1,1))
 
     # Calculate the electronic ground state of the system
     if not os.path.isfile(system.outname + '_GS.gpw'):
