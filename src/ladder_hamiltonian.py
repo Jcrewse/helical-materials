@@ -34,17 +34,11 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
         # This transformation is applied each layer so that after 
         # n_phi layers we have
         # H --> R^{n_phi}HR^{+ n_phi}
-        print(f'Layer = {n}')
-        print(f'H_molecule = \n {H_molecule}')
-        # Raise rotation matrices to appropriate power
-        #R  = np.linalg.matrix_power(rot_matrix, n)
-        #RT = np.linalg.matrix_power(rot_matrix_dagger, n)
         
-        # Carry out the unitary transformation
+        # Carry out the unitary transformation once per layer
         if n >= 1:
             H_rotated = np.matmul(H_rotated, rot_matrix_dagger)
             H_rotated = np.matmul(rot_matrix, H_rotated)
-        print(f'H_rot = \n {H_rotated}')
         
         # On-site pot in each layer set to diagonal terms 
         sys[lat(n,0)] = H_rotated[0,0]
