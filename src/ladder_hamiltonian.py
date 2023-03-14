@@ -53,12 +53,12 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10
         sys[lat(n,0), lat(n,1)] = H_rotated[0,1]
         sys[lat(n,1), lat(n,0)] = H_rotated[1,0]
         
-        # Inter-layer hoppings
-        sys[kwant.builder.HoppingKind((1,0), lat, lat)] = -inter_hop/l_v
-        
-        # Cross hoppings
-        sys[kwant.builder.HoppingKind((1,1), lat, lat)] = -intra_hop/l_w
-        sys[kwant.builder.HoppingKind((1,-1), lat, lat)] = -intra_hop/l_w
+    # Inter-layer hoppings
+    sys[kwant.builder.HoppingKind((1,0), lat, lat)] = -inter_hop/l_v
+    
+    # Cross hoppings
+    sys[kwant.builder.HoppingKind((1,1), lat, lat)] = -intra_hop/l_w
+    sys[kwant.builder.HoppingKind((1,-1), lat, lat)] = -intra_hop/l_w
     
     # Output
     if output:
