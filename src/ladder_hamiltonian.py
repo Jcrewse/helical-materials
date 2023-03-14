@@ -27,6 +27,10 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10
     rot_matrix = [[cos(phi), -sin(phi)],[sin(phi), cos(phi)]]
     rot_matrix_dagger = np.transpose(np.conjugate(rot_matrix))
     
+    # Geometric factors for cross hoppings
+    l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
+    l_w = (0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
+    
     H_rotated = np.array(H_molecule)
     for n in range(n_phi):
         # Rotate the molecular Hamiltonian
@@ -37,7 +41,7 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10
         # H --> R^{n_phi}HR^{+ n_phi}
         
         # Carry out the unitary transformation once per layer
-        if n >= 1:
+        if n > 0:
             H_rotated = np.matmul(H_rotated, rot_matrix_dagger)
             H_rotated = np.matmul(rot_matrix, H_rotated)
         
@@ -48,15 +52,13 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10
         # Intra-layer hoppings in each layer set as off-diagonals
         sys[lat(n,0), lat(n,1)] = H_rotated[0,1]
         sys[lat(n,1), lat(n,0)] = H_rotated[1,0]
-    
-    # Inter-layer hoppings
-    l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
-    sys[kwant.builder.HoppingKind((1,0), lat, lat)]   = -inter_hop/l_v
-
-    # Cross hoppings
-    l_u = (0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
-    sys[kwant.builder.HoppingKind((1,1), lat, lat)]   = -cross_hop/l_u
-    sys[kwant.builder.HoppingKind((-1,1), lat, lat)]  = -cross_hop/l_u
+        
+        # Inter-layer hoppings
+        sys[kwant.builder.HoppingKind((1,0), lat, lat)] = -inter_hop/l_v
+        
+        # Cross hoppings
+        sys[kwant.builder.HoppingKind((1,1), lat, lat)] = -intra_hop/l_w
+        sys[kwant.builder.HoppingKind((1,-1), lat, lat)] = -intra_hop/l_w
     
     # Output
     if output:
