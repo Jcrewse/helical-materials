@@ -2,7 +2,7 @@ import numpy as np
 import kwant
 from math import cos, sin
 
-def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
+def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,5), phi = 0,
                 n_phi = 1, output=False):
     """Returns the kwant.Builder object of the helical ladder system with the
     twist angle implemented as a unitary transformation of the molecular 
@@ -21,10 +21,11 @@ def hamiltonian(lat_const_a, lat_const_b, width, hops, phi,
     sys  = kwant.builder.Builder(symm)
     
     # Define the molecular Hamiltonian
-    # Rotation matrices
     H_molecule = [[on_site_pot, -intra_hop],[-intra_hop, on_site_pot]]
+    
+    # Rotation matrices
     rot_matrix = [[cos(phi), -sin(phi)],[sin(phi), cos(phi)]]
-    rot_matrix_dagger = np.transpose(rot_matrix)
+    rot_matrix_dagger = np.transpose(np.conjugate(rot_matrix))
     
     H_rotated = np.array(H_molecule)
     for n in range(n_phi):
