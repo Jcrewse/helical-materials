@@ -31,34 +31,58 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10
     l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
     l_w = (0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
     
+    # Matrix elements #########################################################
     H_rotated = np.array(H_molecule)
     for n in range(n_phi):
-        # Rotate the molecular Hamiltonian
-        # For each layer in unit cell, perform the unitary transformation
-        # H --> RHR^+
-        # This transformation is applied each layer so that after 
-        # n_phi layers we have
-        # H --> R^{n_phi}HR^{+ n_phi}
-        
         # Carry out the unitary transformation once per layer
         if n > 0:
             H_rotated = np.matmul(H_rotated, rot_matrix_dagger)
             H_rotated = np.matmul(rot_matrix, H_rotated)
+            
+        # print(f'layer = {n}')
+        # print(H_rotated)
         
         # On-site pot in each layer set to diagonal terms 
         sys[lat(n,0)] = H_rotated[0,0]
         sys[lat(n,1)] = H_rotated[1,1]
         
         # Intra-layer hoppings in each layer set as off-diagonals
+        # Hermitian conjugate hoppings taken care of internally by kwant
         sys[lat(n,0), lat(n,1)] = H_rotated[0,1]
-        sys[lat(n,1), lat(n,0)] = H_rotated[1,0]
         
     # Inter-layer hoppings
-    sys[kwant.builder.HoppingKind((1,0), lat, lat)] = -inter_hop/l_v
+    sys[kwant.builder.HoppingKind((1,0), lat)] = -inter_hop/l_v
     
     # Cross hoppings
     sys[kwant.builder.HoppingKind((1,1), lat, lat)] = -intra_hop/l_w
     sys[kwant.builder.HoppingKind((1,-1), lat, lat)] = -intra_hop/l_w
+    
+    # # By hand matrix elements #################################################
+    # # On-site terms
+    # sys[lat(0,0)] = 20
+    # sys[lat(0,1)] = 20
+    # sys[lat(1,0)] = 20
+    # sys[lat(1,1)] = 20
+    
+    # # t
+    # sys[lat(0,0), lat(0,1)] = 25
+    # sys[lat(1,0), lat(1,1)] = -25
+    
+    # # v
+    # sys[lat(0,1), lat(1,1)] = -10
+    # sys[lat(0,0), lat(1,0)] = -10
+
+    # # w
+    # sys[lat(0,0), lat(1,1)] = -5
+    # sys[lat(0,1), lat(1,0)] = -5
+    
+    # # Inter-cell hoppings
+    # # v
+    # sys[lat(0,0), lat(-1,0)] = -10
+    # sys[lat(0,1), lat(-1,1)] = -10
+    # # w
+    # sys[lat(0,1), lat(-1,0)] = -5
+    # sys[lat(0,0), lat(-1,1)] = -5
     
     # Output
     if output:
