@@ -2,21 +2,22 @@ import numpy as np
 import kwant
 from math import cos, sin
 
-def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10), phi = 0,
-                n_phi = 1, output=False):
+def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, 
+                hops = (20,25,10,10), phi = 0, n_phi = 1, output=False):
+    
     """Returns the kwant.Builder object of the helical ladder system with the
     twist angle implemented as a unitary transformation of the molecular 
     Hamtiltonian."""
-
-    # Unpack the hoppings tuple
+    
+    # Set up ##################################################################
+    # Unpack hoppings tuple
     on_site_pot, intra_hop, inter_hop, cross_hop = hops
 
-    # Define the lattice
+    # Define lattice
     lat_vecs = [(lat_const_a,0), (0,lat_const_b)]
     lat = kwant.lattice.general(lat_vecs, norbs=1)
 
-    # System is translationally symmetric for translations
-    # T = n_phi*a
+    # Define translational symmetry
     symm = kwant.lattice.TranslationalSymmetry((n_phi*lat_const_a,0))
     sys  = kwant.builder.Builder(symm)
     
@@ -30,6 +31,7 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10
     # Geometric factors for cross hoppings
     l_v = (0.5*lat_const_a**2)*(1-np.cos(phi)) + lat_const_b**2
     l_w = (0.5*lat_const_a**2)*(1+np.cos(phi)) + lat_const_b**2
+    ###########################################################################
     
     # Matrix elements #########################################################
     H_rotated = np.array(H_molecule)
@@ -56,8 +58,10 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10
     # Cross hoppings
     sys[kwant.builder.HoppingKind((1,1), lat, lat)] = -intra_hop/l_w
     sys[kwant.builder.HoppingKind((1,-1), lat, lat)] = -intra_hop/l_w
+    ###########################################################################
     
     # # By hand matrix elements #################################################
+    # # 2 unit cells
     # # On-site terms
     # sys[lat(0,0)] = 20
     # sys[lat(0,1)] = 20
@@ -83,14 +87,16 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10
     # # w
     # sys[lat(0,1), lat(-1,0)] = -5
     # sys[lat(0,0), lat(-1,1)] = -5
+    #############################################################################
     
-    # Output
+    # Output ####################################################################
     if output:
         np.set_printoptions(linewidth=500)
         print('========== Hamiltonian initialized ==========')
         print(f'Lattice constants: a = {lat_const_a}, b = {lat_const_b}')
         print(f'Finite width = {width}')
-        print(f'Hoppings: u = {on_site_pot}, t = {intra_hop}, v = {inter_hop}, w = {cross_hop}')
+        print(f'Hoppings: u = {on_site_pot}, t = {intra_hop},\
+              v = {inter_hop}, w = {cross_hop}')
         if n_phi==1:
             print('Twist angle: phi = 0')
         if n_phi>1:
@@ -99,6 +105,7 @@ def hamiltonian(lat_const_a = 1, lat_const_b = 1, width = 2, hops = (20,25,10,10
         print('H = \n' + str(sys.finalized().hamiltonian_submatrix()))
         print('H_cell = \n' + str(sys.finalized().cell_hamiltonian()))
         print('H_inter_cell = \n' + str(sys.finalized().inter_cell_hopping()))
+    ###########################################################################
 
     return sys
 
