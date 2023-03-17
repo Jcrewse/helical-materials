@@ -22,7 +22,7 @@ def main():
     }
 
     # Create the system of interest
-    system = systems.create_system('H2-chain', angle = 0, cell_size = 1)
+    system = systems.create_system('H2-chain', angle = np.pi/2, cell_size = 1)
 
     # User output of system for inspection
     #system.view(range = (1,1,1))
@@ -58,9 +58,9 @@ def calc_groundstate(system, params):
     print('Calculating ground state...')
     
     # Set up GPAW calculator
-    calc = GPAW(txt = log_outfile)
+    #calc = GPAW(txt = log_outfile)
     #calc = GPAW(mode = 'lcao', basis = 'dzp', txt = log_outfile)
-    #calc = GPAW(mode = PW(1000), txt = log_outfile)
+    calc = GPAW(mode = PW(1000), txt = log_outfile)
 
     calc.default_parameters = params
 
