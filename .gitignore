@@ -1,11 +1,13 @@
 # Data folders (no need to store on GitHub for now)
 data
 
+# GPAW output files
+*.gpw 
+*.json
+*.log
+
 # Figures
 *.png
-
-# log files
-*.log
 
 # Standard pycache
 *__pycache__
