@@ -6,12 +6,11 @@ from gpaw import GPAW, PW, FermiDirac
 
 def calc_groundstate(system, params):
     '''
-    ===========================================================================
-    Calculate the ground state of the system.
-    -----------------------------------------
-    ===========================================================================
+    Calculates the ground state density. 
+    ------------------------------------
+    Writes converged density to .gpw file.
+    Calculation details written to .log file.
     '''
-    print('\n========== Calculating ground state ==========\n')
     
     # Define output file names from system attribute        
     gpw_outfile = f'./{system.outname}_GS.gpw'
@@ -24,19 +23,12 @@ def calc_groundstate(system, params):
     system.Atoms.calc = calc
 
     # Perform some calculations
-    E       = system.e_ground = system.Atoms.get_potential_energy()
-    E_fermi = system.e_fermi  = calc.get_fermi_level()
-    E_tot   = system.Atoms.get_total_energy()
+    system.e_ground = system.Atoms.get_potential_energy()
+    system.e_fermi  = calc.get_fermi_level()
+    system.e_tot    = system.Atoms.get_total_energy()
     
     # Write to gpw file
     calc.write(gpw_outfile, mode = 'all')
-    
-    # User output
-    print('Total energy:     {:3.4f} eV'.format(E_tot))
-    print('Potential Energy: {:3.4f} eV'.format(E))
-    print('Fermi energy:     {:3.4f} eV'.format(E_fermi))
-    print(f'Output file: {log_outfile}')
-    print(f'Restart file: {gpw_outfile}')
     
     return
 
@@ -96,11 +88,11 @@ def calc_wavefunction(system, params):
 
 def calc_bandstructure(system, npoints=100):
     '''
-    ===========================================================================
-    Calculate the band structure.
+    Calculate the band structure
     -----------------------------
     Using fixed precalculated groundstate density read from .gpw.
-    ===========================================================================
+    Converged band structure written to .json file.
+    Calculation details written to .log file. 
     '''
     # Establish file names for calculation i/o
     gpw_infile   = system.outname + '_GS.gpw'
@@ -118,10 +110,11 @@ def calc_bandstructure(system, npoints=100):
 
     print('\n========== Calculating band structure ==========\n')
     print(kpath)
-    
+
     # Converge the band structure non self-consistently, with a fixed density
     bs_calc = GPAW(gpw_infile).fixed_density(
         symmetry = 'off',
+        nbands = system.n_bands,
         kpts = kpath, 
         convergence={'bands':'occupied'},
         txt = log_outfile)
@@ -143,12 +136,18 @@ def calc_bandstructure(system, npoints=100):
     # Plot onto DOS axis
     dos_ax.plot(dos, e)
 
-    # Plot configuration
+    # Plot configuration 
+    # band structure axis
     bs_ax.set_title(r'System: {}, $\epsilon_0 = {:3.2f}$eV, $\epsilon_F = {:3.2f}$eV'.format(system.tag, e_ground, e_fermi))
     bs_ax.set_ylabel(r'$\epsilon\; [eV]$')
+    bs_ax.set_ylim(system.emin, system.emax)
+    
+    # dos axis
     dos_ax.set_xlabel(r'$D(\epsilon) \; (total)$')
+    dos_ax.set_xlim(left=0)
     dos_ax.yaxis.tick_right()
     dos_ax.yaxis.set_visible(False)
+    
     plt.subplots_adjust(wspace=0.1)
 
     # Save figure and show
