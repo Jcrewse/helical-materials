@@ -23,9 +23,15 @@ def calc_groundstate(system, params):
     system.Atoms.calc = calc
 
     # Perform some calculations
-    system.e_ground = system.Atoms.get_potential_energy()
-    system.e_fermi  = calc.get_fermi_level()
-    system.e_tot    = system.Atoms.get_total_energy()
+    system.e_ground    = system.Atoms.get_potential_energy()
+    system.e_fermi     = calc.get_fermi_level()
+    system.e_tot       = system.Atoms.get_total_energy()
+    
+    density     = calc.density
+    hamiltonian = calc.hamiltonian
+    
+    system.e_kinetic = hamiltonian.calculate_kinetic_energy(density)
+    print(hamiltonian.get_energy)
     
     # Write to gpw file
     calc.write(gpw_outfile, mode = 'all')
