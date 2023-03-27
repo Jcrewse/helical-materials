@@ -27,6 +27,8 @@ class System():
         self.e_fermi     = 0
         self.e_ground    = 0
         self.e_tot       = 0
+        self.e_kinetic   = 0
+        self.temperature = 0
         self.pbc         = (True, False, False)
         self.emin        = -25
         self.emax        = 35
