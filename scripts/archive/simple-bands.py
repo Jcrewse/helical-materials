@@ -1,5 +1,5 @@
 from src.ase_systems import H2_chain
-from gpaw import GPAW, PW, FermiDirac
+from gpaw import GPAW, PW, FermiDirac, hamiltonian
 
 system = H2_chain.System(twist_angle=0, cell_size=1)
 
@@ -13,6 +13,10 @@ system.Atoms.calc = calc
 system.Atoms.get_potential_energy()
 ef = calc.get_fermi_level()
 calc.write('Si_gs.gpw')
+
+density = calc.density
+ham = calc.hamiltonian
+KE = ham.calculate_kinetic_energy(density)
 
 # Restart from ground state and fix potential:
 calc = GPAW('Si_gs.gpw').fixed_density(
