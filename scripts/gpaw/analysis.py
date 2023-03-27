@@ -5,11 +5,13 @@ from src.ase_systems import H2_chain
 from src.ase_systems import CO_chain
 from math import pi
 
+restart = False
+
 # Calculation parameters ######################################################
 # Parameters not list are calc.default_parameters
 params = {
-    'mode'        : PW(1000),            # Calculation mode
-    'kpts'        : (50,1,1),            # k-points sampled in periodic sys
+    'mode'        : PW(500),            # Calculation mode
+    'kpts'        : (25,1,1),            # k-points sampled in periodic sys
     'random'      : True,                # Random guess of WF's in empty bands
     'xc'          : 'PBE',               # Exchange-correlation function
     'occupations' : FermiDirac(0.01),    # Occupation number smearing (input # = kT)
@@ -25,7 +27,7 @@ system = H2_chain.System(twist_angle = 0, cell_size = 1)
 print('\n========== Ground State Calculation ==========\n')
 
 # Restart previous calculation if file exists
-if os.path.isfile(f'{system.outname}_GS.gpw'):
+if os.path.isfile(f'{system.outname}_GS.gpw') and restart:
     
     print(f'Ground state restart file found: {system.outname}_GS.gpw')
     
@@ -43,12 +45,11 @@ else:
     print(f'    k points:  {params["kpts"]}')
     print(f'    converge:  {params["convergence"]}')
     
-    
+    # Call density convergence function
     calc_groundstate(system, params=params)
     
-    print(system.e_ground)
-    print(system.e_tot)
-    print(system.e_fermi)
+    
+
     
 # Calculate Wave Functions ####################################################
 # calc_wavefunction(system, params)
