@@ -1,8 +1,7 @@
 # GPAW calculator module ######################################################
-import os
 import numpy as np
 import matplotlib.pyplot as plt
-from gpaw import GPAW, PW, FermiDirac
+from gpaw import GPAW
 
 def calc_groundstate(system, params):
     '''
@@ -22,16 +21,17 @@ def calc_groundstate(system, params):
     # Associate the GPAW calculator with the Atoms object
     system.Atoms.calc = calc
 
-    # Perform some calculations
-    system.e_ground    = system.Atoms.get_potential_energy()
-    system.e_fermi     = calc.get_fermi_level()
-    system.e_tot       = system.Atoms.get_total_energy()
+    # Perform some calculations ###############################################
+    # Atomic energies
+    system.e_ion_total     = system.Atoms.get_total_energy()     
+    system.e_ion_potential = system.Atoms.get_potential_energy()
+    system.ion_forces      = system.Atoms.get_forces()
     
-    density     = calc.density
-    hamiltonian = calc.hamiltonian
-    
-    system.e_kinetic = hamiltonian.calculate_kinetic_energy(density)
-    print(hamiltonian.get_energy)
+    # Electronic energies
+    system.e_kinetic  = calc.hamiltonian.e_kinetic
+    system.e_coulomb  = calc.hamiltonian.e_coulomb
+    system.e_exchange = calc.hamiltonian.e_xc
+    system.e_fermi    = calc.get_fermi_level()  
     
     # Write to gpw file
     calc.write(gpw_outfile, mode = 'all')
