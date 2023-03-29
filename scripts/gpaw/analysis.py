@@ -1,22 +1,26 @@
 import os
+from ase.units import Ha
+from gpaw import PW, FermiDirac
 from ase.visualize import view
 from src.GPAWCalculator import *
 from src.ase_systems import H2_chain
 from src.ase_systems import CO_chain
+from src.ase_systems import C2H2_chain
 from math import pi
 
 restart = False
 
 # Calculation parameters ######################################################
-# Parameters not list are calc.default_parameters
+# Parameters not list are GPAW calc.default_parameters
 params = {
-    'mode'        : PW(500),            # Calculation mode
-    'kpts'        : (25,1,1),            # k-points sampled in periodic sys
+    'mode'        : PW(1000),            # Calculation mode
+    'kpts'        : (30,1,1),            # k-points sampled in periodic sys
     'random'      : True,                # Random guess of WF's in empty bands
     'xc'          : 'PBE',               # Exchange-correlation function
-    'occupations' : FermiDirac(0.01),    # Occupation number smearing (input # = kT)
+    'occupations' : FermiDirac(0.01),    # Occupation smearing (input # = kT)
     'convergence' : {'energy' : 0.0001}  # Convergence criteria
     }
+###############################################################################
 
 # Create System ###############################################################
 N_phi = 1
@@ -32,13 +36,14 @@ if os.path.isfile(f'{system.outname}_GS.gpw') and restart:
     print(f'Ground state restart file found: {system.outname}_GS.gpw')
     
     system.calc = GPAW(f'{system.outname}_GS.gpw')
-    system.e_ground = system.calc.get_potential_energy()
+    system.e_pot = system.calc.get_potential_energy()
     system.e_fermi  = system.calc.get_fermi_level()
     
 # Converge ground state density if no file exists
 else:
     
-    print('Calculating ground state...')
+    # User output of parameters
+    print('Calculating ground state...\n')
     print('Input parameters:')
     print(f'    calc mode: {params["mode"]}')
     print(f'    xc func:   {params["xc"]}')
@@ -48,11 +53,16 @@ else:
     # Call density convergence function
     calc_groundstate(system, params=params)
     
-    
-
+    # Output resulting energies
+    print('\nGround state converged...\n')
+    print(f'Kinetic Energy:   {Ha*system.e_kinetic:3.5f}eV')
+    print(f'Potential Energy: {Ha*system.e_coulomb:3.5f}eV')
+    print(f'Exchange Energy:  {Ha*system.e_exchange:3.5f}eV')
+    print(f'Fermi Energy:     {system.e_fermi:3.5f}eV')
+    print(f'Ion Forces: {system.ion_forces}')
     
 # Calculate Wave Functions ####################################################
 # calc_wavefunction(system, params)
 
 # Calculate Band Structure ####################################################
-calc_bandstructure(system, npoints=100)
+#calc_bandstructure(system, npoints=500)
