@@ -21,17 +21,22 @@ class System():
     '''
     
     def __init__(self, twist_angle = 0, cell_size = 1):
-        self.tag         = 'H2'
-        self.twist_angle = twist_angle
-        self.cell_size   = cell_size
-        self.e_fermi     = 0
-        self.e_ground    = 0
-        self.e_tot       = 0
-        self.e_kinetic   = 0
-        self.temperature = 0
-        self.pbc         = (True, False, False)
-        self.emin        = -25
-        self.emax        = 35
+        self.tag             = 'H2'
+        self.twist_angle     = twist_angle
+        self.cell_size       = cell_size
+        self.e_ion_total     = None
+        self.e_ion_kinetic   = None
+        self.e_ion_potential = None
+        self.e_total         = None
+        self.e_kinetic       = None
+        self.e_coulomb       = None
+        self.e_exchange      = None
+        self.e_fermi         = None
+        self.temperature     = None
+        self.ion_forces      = None
+        self.pbc             = (True, False, False)
+        self.emin            = -20
+        self.emax            = 20
         
         # Create the Atoms object for this System
         self.Atoms = self.create(twist_angle, cell_size)
@@ -50,7 +55,7 @@ class System():
         else:
             N_phi = self.N_phi = int(2*pi/angle)
             
-        self.n_bands = 50*N_phi
+        self.n_bands = 10*N_phi
             
         # Unit cell sizes
         a = N_phi*l
