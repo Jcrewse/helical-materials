@@ -1,10 +1,11 @@
 # Data folders (no need to store on GitHub for now)
-data
+results
 
 # GPAW output files
 *.gpw 
 *.json
 *.log
+*.cube
 
 # Figures
 *.png
