@@ -1,6 +1,8 @@
 # GPAW calculator module ######################################################
 import numpy as np
 import matplotlib.pyplot as plt
+from ase.units import Bohr
+from ase.io import write
 from gpaw import GPAW
 
 def calc_groundstate(system, params):
@@ -42,53 +44,61 @@ def calc_wavefunction(system, params):
 
     # Retrieve pseudo wave functions from calculator
     # -------------------------------------------------------------------------
-    system.Atoms.calc.default_parameters = params
-    wave_func = system.Atoms.calc.get_pseudo_wave_function(band=1)
-
-    # Calculate and normalize probability density
-    # -------------------------------------------------------------------------
-    prob = np.abs(wave_func)**2
-    prob = prob/np.sum(prob)
+    #system.Atoms.calc.default_parameters = params
+    #wave_func = system.Atoms.calc.get_pseudo_wave_function(band=1)
     
-    print(np.shape(prob))
+    # loop over all wfs and write their cube files
+    nbands = system.Atoms.calc.get_number_of_bands()
+    for band in range(nbands):
+        wf = system.Atoms.calc.get_pseudo_wave_function(band=band)
+        fname = f'{system.outname}_{band}.cube'
+        print('writing wf', band, 'to file', fname)
+        write(fname, system.Atoms, data=wf * Bohr**1.5)
 
-    # Calculate atom positions
-    x_points = np.size(wave_func[:][0][0])
-    y_points = np.size(wave_func[0][:][0])
-    z_points = np.size(wave_func[0][0][:])
+    # # Calculate and normalize probability density
+    # # -------------------------------------------------------------------------
+    # prob = np.abs(wave_func)**2
+    # prob = prob/np.sum(prob)
+    
+    # print(np.shape(prob))
 
-    h = params['h']
+    # # Calculate atom positions
+    # x_points = np.size(wave_func[:][0][0])
+    # y_points = np.size(wave_func[0][:][0])
+    # z_points = np.size(wave_func[0][0][:])
 
-    cell = system.Atoms.get_cell()
+    # h = params['h']
 
-    x_grid = np.linspace(0, cell[0][0], num=x_points)
-    y_grid = np.linspace(0, cell[1][1], num=y_points)
-    z_grid = np.linspace(0, cell[2][2], num=z_points)
+    # cell = system.Atoms.get_cell()
 
-    positions = system.Atoms.get_positions()
+    # x_grid = np.linspace(0, cell[0][0], num=x_points)
+    # y_grid = np.linspace(0, cell[1][1], num=y_points)
+    # z_grid = np.linspace(0, cell[2][2], num=z_points)
 
-    # Average over one axis
-    prob_xy = np.average(prob, axis=2)
-    prob_yz = np.average(prob, axis=0)
-    prob_zx = np.average(prob, axis=1)
-    print(np.shape(prob_xy))
+    # positions = system.Atoms.get_positions()
 
-    fig, (ax_xy, ax_yz, ax_zx) = plt.subplots(3,1, figsize = (5,15))
-    ax_xy.set_xlabel('x')
-    ax_xy.set_ylabel('y')
-    ax_xy.contourf(x_grid, y_grid, prob_xy, levels = 20)
-    ax_yz.set_xlabel('y')
-    ax_yz.set_ylabel('z')
-    ax_yz.contourf(y_grid, z_grid, prob_yz, levels = 20)
-    ax_zx.set_xlabel('z')
-    ax_zx.set_ylabel('x')
-    ax_zx.contourf(z_grid, x_grid, prob_zx, levels = 20)
-    for pos in positions:
-        ax_xy.scatter(pos[0]+h, pos[1]+h)
-        ax_yz.scatter(pos[1]+h, pos[2]+h)
-        ax_zx.scatter(pos[2]+h, pos[0]+h)
+    # # Average over one axis
+    # prob_xy = np.average(prob, axis=2)
+    # prob_yz = np.average(prob, axis=0)
+    # prob_zx = np.average(prob, axis=1)
+    # print(np.shape(prob_xy))
 
-    plt.show()
+    # fig, (ax_xy, ax_yz, ax_zx) = plt.subplots(3,1, figsize = (5,15))
+    # ax_xy.set_xlabel('x')
+    # ax_xy.set_ylabel('y')
+    # ax_xy.contourf(x_grid, y_grid, prob_xy, levels = 20)
+    # ax_yz.set_xlabel('y')
+    # ax_yz.set_ylabel('z')
+    # ax_yz.contourf(y_grid, z_grid, prob_yz, levels = 20)
+    # ax_zx.set_xlabel('z')
+    # ax_zx.set_ylabel('x')
+    # ax_zx.contourf(z_grid, x_grid, prob_zx, levels = 20)
+    # for pos in positions:
+    #     ax_xy.scatter(pos[0]+h, pos[1]+h)
+    #     ax_yz.scatter(pos[1]+h, pos[2]+h)
+    #     ax_zx.scatter(pos[2]+h, pos[0]+h)
+
+    # plt.show()
 
     return
 
@@ -107,7 +117,7 @@ def calc_bandstructure(system, npoints=100):
     json_outfile = system.outname + '_BS.json'
 
     # Retrieve energies for reference points
-    e_ground = system.e_ground
+    e_ground = system.e_ion_potential
     e_fermi  = system.e_fermi
 
     # Retrieve cell and find suitable band path from it
@@ -144,7 +154,7 @@ def calc_bandstructure(system, npoints=100):
 
     # Plot configuration 
     # band structure axis
-    bs_ax.set_title(r'System: {}, $\epsilon_0 = {:3.2f}$eV, $\epsilon_F = {:3.2f}$eV'.format(system.tag, e_ground, e_fermi))
+    bs_ax.set_title(f'System: {system.tag}, $\epsilon_0 = {e_ground:3.2f}$eV, $\epsilon_F = {e_fermi:3.2f}$eV')
     bs_ax.set_ylabel(r'$\epsilon\; [eV]$')
     bs_ax.set_ylim(system.emin, system.emax)
     
