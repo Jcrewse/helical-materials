@@ -20,7 +20,7 @@ class System():
     =======================================================================
     '''
     
-    def __init__(self, twist_angle = 0, cell_size = 1):
+    def __init__(self, twist_angle = 0, cell_size = 1, d = 0.779, l = 1.1):
         self.tag             = 'H2'
         self.twist_angle     = twist_angle
         self.cell_size       = cell_size
@@ -35,19 +35,15 @@ class System():
         self.temperature     = None
         self.ion_forces      = None
         self.pbc             = (True, False, False)
+        self.l               = l
+        self.d               = d
         self.emin            = -20
         self.emax            = 20
         
         # Create the Atoms object for this System
-        self.Atoms = self.create(twist_angle, cell_size)
+        self.Atoms = self.create(twist_angle, cell_size, d, l)
     
-    def create(self, angle, cell_size):
-
-        # H-H bond length 
-        d = 0.779
-
-        # H2-H2 bong length
-        l = 1.1
+    def create(self, angle, cell_size, d, l):
 
         # Number of layers in the unit cell
         if angle == 0: 
