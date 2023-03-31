@@ -17,26 +17,29 @@ class System():
         cell_size (int): Number of unit cells to include in calculation
     =======================================================================
     '''
-    
-    def __init__(self, twist_angle, cell_size = 1):
-        self.tag = 'CO'
-        self.twist_angle = twist_angle
-        self.cell_size = cell_size
-        self.e_fermi = 0
-        self.e_ground = 0
-        self.pbc = (True, False, False)
-        self.emin = -55
-        self.emax = 45
+    def __init__(self, twist_angle = 0, cell_size = 1, d = 1.056, l = 1.5):
+        self.tag             = 'CO'
+        self.twist_angle     = twist_angle
+        self.cell_size       = cell_size
+        self.e_ion_total     = None
+        self.e_ion_kinetic   = None
+        self.e_ion_potential = None
+        self.e_total         = None
+        self.e_kinetic       = None
+        self.e_coulomb       = None
+        self.e_exchange      = None
+        self.e_fermi         = None
+        self.temperature     = None
+        self.ion_forces      = None
+        self.pbc             = (True, False, False)
+        self.l               = l
+        self.d               = d
+        self.emin            = -20
+        self.emax            = 20
         
-        self.Atoms = self.create(twist_angle, cell_size)
-    
-    def create(self, angle, cell_size):
+        self.Atoms = self.create(twist_angle, cell_size, d, l)
 
-        # C-O bond length
-        d = 1.056
-
-        # CO-CO bong length
-        l = 1.5
+    def create(self, angle, cell_size, d, l):
 
         # Number of layers in the unit cell
         if angle == 0: 
@@ -44,7 +47,7 @@ class System():
         else:
             N_phi = int(2*pi/angle)
             
-        self.n_bands = 8*N_phi
+        self.n_bands = 10*N_phi
             
         # Unit cell sizes
         a = N_phi*l
