@@ -25,9 +25,9 @@ for i, n in enumerate(Ng_set):
     
     calc_groundstate(system, params)
     
-    print(f'Ground state energy: {system.e_ground:3.4f} eV')
+    print(f'Ground state energy: {system.e_pot:3.4f} eV')
     print(f'Fermi energy:        {system.e_fermi:3.4f} eV')
-    ground_energies.append(system.e_ground)
+    ground_energies.append(system.e_pot)
     fermi_energies.append(system.e_fermi)
     N_kpts.append(n)
     if i > 0:
