@@ -51,9 +51,15 @@ def calc_wavefunction(system, params):
     nbands = system.Atoms.calc.get_number_of_bands()
     for band in range(nbands):
         wf = system.Atoms.calc.get_pseudo_wave_function(band=band)
-        fname = f'{system.outname}_{band}.cube'
-        print('writing wf', band, 'to file', fname)
-        write(fname, system.Atoms, data=wf * Bohr**1.5)
+        re_wf = wf.real
+        im_wf = wf.imag
+        wf_2  = np.conjugate(wf)*wf
+        re_fname  = f'{system.outname}_{band}_RePsi.cube'
+        im_fname  = f'{system.outname}_{band}_ImPsi.cube'
+        wf2_fname = f'{system.outname}_{band}_Psi2.cube'
+        write(re_fname, system.Atoms,  data = re_wf)
+        write(im_fname, system.Atoms,  data = im_wf)
+        write(wf2_fname, system.Atoms, data = wf_2)
 
     # # Calculate and normalize probability density
     # # -------------------------------------------------------------------------
