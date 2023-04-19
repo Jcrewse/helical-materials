@@ -16,4 +16,5 @@ results
 
 # Misc
 *.vscode
+*.DS_store
 
