@@ -1,11 +1,13 @@
 # GPAW calculator module ######################################################
+import os
 import numpy as np
 import matplotlib.pyplot as plt
-from ase.units import Bohr
+from ase.units import Bohr, Ha
 from ase.io import write
 from gpaw import GPAW
+from gpaw.unfold import Unfold, find_K_from_k, plot_spectral_function
 
-def calc_groundstate(system, params):
+def calc_groundstate(system, params, restart = True):
     '''
     Calculates the ground state density. 
     ------------------------------------
@@ -13,17 +15,33 @@ def calc_groundstate(system, params):
     Calculation details written to .log file.
     '''
     
-    # Define output file names from system attribute        
+    ########## Define output filenames ########## 
     gpw_outfile = f'./{system.outname}_GS.gpw'
     log_outfile = f'./{system.outname}_GS.log'
     
-    # Set up GPAW calculator
-    calc = GPAW(txt = log_outfile, **params)
+    ########## Set up GPAW calculator ##########
+    if os.path.isfile(gpw_outfile) and restart:
+        
+        print(f'Ground state restart file found: {system.outname}_GS.gpw') 
+        calc = GPAW(gpw_outfile)
+        
+        system.Atoms.calc = calc
+        
+    else:
+        # User output of parameters
+        print('Calculating ground state...\n')
+        print('Input parameters:')
+        print(f'    calc mode: {params["mode"]}')
+        print(f'    xc func:   {params["xc"]}')
+        print(f'    k points:  {params["kpts"]}')
+        print(f'    converge:  {params["convergence"]}')
+        
+        calc = GPAW(txt = log_outfile, **params)
 
-    # Associate the GPAW calculator with the Atoms object
-    system.Atoms.calc = calc
+        # Associate the GPAW calculator with the Atoms object
+        system.Atoms.calc = calc
 
-    # Perform some calculations ###############################################
+    ########### Perform some calculations ##########
     # Atomic energies
     system.e_ion_total     = system.Atoms.get_total_energy()     
     system.e_ion_potential = system.Atoms.get_potential_energy()
@@ -35,8 +53,18 @@ def calc_groundstate(system, params):
     system.e_exchange = calc.hamiltonian.e_xc
     system.e_fermi    = calc.get_fermi_level()  
     
-    # Write to gpw file
-    calc.write(gpw_outfile, mode = 'all')
+    if not os.path.isfile(gpw_outfile) and restart:
+        calc.write(gpw_outfile, mode = 'all')
+    
+    ########### Output results ##########
+    print('\nGround state converged...\n')
+    print('\n---------- Energies ----------')
+    print(f'Kinetic Energy:   {Ha*system.e_kinetic:3.5f}eV')
+    print(f'Potential Energy: {Ha*system.e_coulomb:3.5f}eV')
+    print(f'Exchange Energy:  {Ha*system.e_exchange:3.5f}eV')
+    print(f'Fermi Energy:     {system.e_fermi:3.5f}eV')
+    print('\n---------- Forces ----------\n')
+    print(f'Ion Forces: {system.ion_forces}')
     
     return
 
@@ -50,132 +78,159 @@ def calc_wavefunction(system, params):
     # loop over all wfs and write their cube files
     nbands = system.Atoms.calc.get_number_of_bands()
     for band in range(nbands):
+        
+        # Get pseudo wave functions for the band
         wf = system.Atoms.calc.get_pseudo_wave_function(band=band)
+        
+        # Separate real/imaginary components
         re_wf = wf.real
         im_wf = wf.imag
+        
+        # Calculate porbability density
         wf_2  = np.conjugate(wf)*wf
+        
+        # Establish file names
         re_fname  = f'{system.outname}_{band}_RePsi.cube'
         im_fname  = f'{system.outname}_{band}_ImPsi.cube'
         wf2_fname = f'{system.outname}_{band}_Psi2.cube'
+        
+        # Write each component to files
         write(re_fname, system.Atoms,  data = re_wf)
         write(im_fname, system.Atoms,  data = im_wf)
         write(wf2_fname, system.Atoms, data = wf_2)
-
-    # # Calculate and normalize probability density
-    # # -------------------------------------------------------------------------
-    # prob = np.abs(wave_func)**2
-    # prob = prob/np.sum(prob)
-    
-    # print(np.shape(prob))
-
-    # # Calculate atom positions
-    # x_points = np.size(wave_func[:][0][0])
-    # y_points = np.size(wave_func[0][:][0])
-    # z_points = np.size(wave_func[0][0][:])
-
-    # h = params['h']
-
-    # cell = system.Atoms.get_cell()
-
-    # x_grid = np.linspace(0, cell[0][0], num=x_points)
-    # y_grid = np.linspace(0, cell[1][1], num=y_points)
-    # z_grid = np.linspace(0, cell[2][2], num=z_points)
-
-    # positions = system.Atoms.get_positions()
-
-    # # Average over one axis
-    # prob_xy = np.average(prob, axis=2)
-    # prob_yz = np.average(prob, axis=0)
-    # prob_zx = np.average(prob, axis=1)
-    # print(np.shape(prob_xy))
-
-    # fig, (ax_xy, ax_yz, ax_zx) = plt.subplots(3,1, figsize = (5,15))
-    # ax_xy.set_xlabel('x')
-    # ax_xy.set_ylabel('y')
-    # ax_xy.contourf(x_grid, y_grid, prob_xy, levels = 20)
-    # ax_yz.set_xlabel('y')
-    # ax_yz.set_ylabel('z')
-    # ax_yz.contourf(y_grid, z_grid, prob_yz, levels = 20)
-    # ax_zx.set_xlabel('z')
-    # ax_zx.set_ylabel('x')
-    # ax_zx.contourf(z_grid, x_grid, prob_zx, levels = 20)
-    # for pos in positions:
-    #     ax_xy.scatter(pos[0]+h, pos[1]+h)
-    #     ax_yz.scatter(pos[1]+h, pos[2]+h)
-    #     ax_zx.scatter(pos[2]+h, pos[0]+h)
-
-    # plt.show()
-
+        
     return
 
-def calc_bandstructure(system, npoints=100):
+def calc_bandstructure(system, npoints, unfold=False):
     '''
-    Calculate the band structure
+    Calculate the band structure of the input system
     -----------------------------
-    Using fixed precalculated groundstate density read from .gpw.
+    Using fixed precalculated groundstate density read from .gpw. 
     Converged band structure written to .json file.
     Calculation details written to .log file. 
+    Unfolding of supercell calculations.
     '''
-    # Establish file names for calculation i/o
+    
+    ########## Establish file names for calculation i/o ##########
+    # gpw_infile   - GPAW restart file from density calculation
+    # gpw_outfile  - GPAW restart file from bands calculation
+    # png_outfile  - Bands plot output file
+    # log_outfile  - Bands log output file
+    # json_outfile - Bands data output file
     gpw_infile   = system.outname + '_GS.gpw'
+    gpw_outfile  = system.outname + '_BS.gpw'
     png_outfile  = system.outname + '_BS.png'
     log_outfile  = system.outname + '_BS.log'
     json_outfile = system.outname + '_BS.json'
 
-    # Retrieve energies for reference points
+    ########## Retrieve energies for reference points #########
     e_ground = system.e_ion_potential
     e_fermi  = system.e_fermi
 
-    # Retrieve cell and find suitable band path from it
+    ########## Retrieve unit/supercell, bandpath ##########
     cell = system.Atoms.get_cell()
     kpath = cell.bandpath(npoints = npoints, pbc = system.pbc)
 
-    print('\n========== Calculating band structure ==========\n')
-    print(kpath)
+    ########## User output ##########
+    print(f'Bandpath: {kpath}')
 
-    # Converge the band structure non self-consistently, with a fixed density
-    bs_calc = GPAW(gpw_infile).fixed_density(
-        symmetry = 'off',
-        nbands = system.n_bands,
-        kpts = kpath, 
-        convergence={'bands':'occupied'},
-        txt = log_outfile)
+    ########### Supercell band structure unfolding ##########
+    if unfold:
+        
+        # Defines an x-axis suitable for plotting bands
+        x, X, _ = kpath.get_linear_kpoint_axis()
+        
+        # Retrieve supercell transform matrix
+        M = system.supercell_transform
+        
+        # Find supercell K-points from unit cell k-points
+        Kpath = []
+        for k in kpath.kpts:
+            K = find_K_from_k(k, M)[0]
+            Kpath.append(K)
+            
+        # Calculate band structure over supercall Brillouin zone
+        bs_calc = GPAW(gpw_infile).fixed_density(
+            symmetry = 'off',
+            nbands = system.n_bands,
+            kpts = Kpath, 
+            convergence={'bands':'occupied'},
+            txt = log_outfile)
+        
+        # Write band structure restart file
+        bs_calc.write(gpw_outfile, 'all')
+            
+        # Initialize Unfold object
+        unfolded = Unfold(name = f'{system.outname}_unfolded',
+                          calc = gpw_outfile,
+                          M = M,
+                          spinorbit = False)
+        
+        # Calculate weights and spectral function
+        # Produces two outputs:
+        # 'weights_{system.outname})_unfolded.pckl'
+        #       Contains \epsilon_Km and P_Km(k)
+        # 'sf_{system.outname}_unfolded.pckl'
+        #       Contains spectral function and coorseponding energy array
+        unfolded.spectral_function(kpts = kpath.kpts, 
+                                 x = x,
+                                 X = X,
+                                 points_name=['G','X'])
+        
+        # Plot spectral function
+        plot_spectral_function(filename = f'sf_{system.outname}_unfolded',
+                       eref = system.e_fermi,
+                       emin = -15,
+                       emax = 15)
+        
+    ########## Standard Band Structure Calculation ##########
+    else:
+        # Converge the band structure non self-consistently, with a fixed density
+        bs_calc = GPAW(gpw_infile).fixed_density(
+            symmetry = 'off',
+            nbands = system.n_bands,
+            kpts = kpath, 
+            convergence={'bands':'occupied'},
+            txt = log_outfile)
+        
+        # Write band structure restart file
+        bs_calc.write(gpw_outfile, 'all')
 
-    # Create band structure object for plotting
-    band_struct = bs_calc.band_structure()
-    band_struct.write(json_outfile)
+        # Create band structure object for plotting, output data
+        band_struct = bs_calc.band_structure()
+        band_struct.write(json_outfile)
 
-    # Get DOS and Fermi energy
-    e, dos = bs_calc.get_dos()
+        # Get DOS and Fermi energy
+        e, dos = bs_calc.get_dos()
 
-    # Create custom figure/axes for BS and DOS
-    fig, (bs_ax, dos_ax) = plt.subplots(1,2,gridspec_kw={'width_ratios':[2,1]},
-                                        figsize = (10,8), sharey = True)
-    
-    # Plot band structure onto BS axis
-    band_struct.plot(ax = bs_ax)
+        # Create custom figure/axes for BS and DOS
+        fig, (bs_ax, dos_ax) = plt.subplots(1,2,gridspec_kw={'width_ratios':[2,1]},
+                                            figsize = (10,8), sharey = True)
+        
+        # Plot band structure onto BS axis
+        band_struct.plot(ax = bs_ax)
 
-    # Plot onto DOS axis
-    dos_ax.plot(dos, e)
+        # Plot onto DOS axis
+        dos_ax.plot(dos, e)
 
-    # Plot configuration 
-    # band structure axis
-    bs_ax.set_title(f'System: {system.tag}, $\epsilon_0 = {e_ground:3.2f}$eV, $\epsilon_F = {e_fermi:3.2f}$eV')
-    bs_ax.set_ylabel(r'$\epsilon\; [eV]$')
-    bs_ax.set_ylim(system.emin, system.emax)
-    
-    # dos axis
-    dos_ax.set_xlabel(r'$D(\epsilon) \; (total)$')
-    dos_ax.set_xlim(left=0)
-    dos_ax.yaxis.tick_right()
-    dos_ax.yaxis.set_visible(False)
-    
-    plt.subplots_adjust(wspace=0.1)
+        # Plot configuration 
+        # band structure axis
+        bs_ax.set_title(f'System: {system.tag}, $\epsilon_0 = {e_ground:3.2f}$eV, $\epsilon_F = {e_fermi:3.2f}$eV')
+        bs_ax.set_ylabel(r'$\epsilon\; [eV]$')
+        bs_ax.set_ylim(system.emin, system.emax)
+        
+        # dos axis
+        dos_ax.set_xlabel(r'$D(\epsilon) \; (total)$')
+        dos_ax.set_xlim(left=0)
+        dos_ax.yaxis.tick_right()
+        dos_ax.yaxis.set_visible(False)
+        
+        plt.subplots_adjust(wspace=0.1)
 
-    # Save figure and show
-    plt.savefig(png_outfile)
-    plt.show()
-    
+        # Save figure and show
+        plt.savefig(png_outfile)
+        plt.show()
+
     return
 
     
