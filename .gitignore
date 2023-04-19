@@ -6,6 +6,7 @@ results
 *.json
 *.log
 *.cube
+*.pckl
 
 # Figures
 *.png
