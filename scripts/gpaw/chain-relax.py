@@ -7,7 +7,7 @@ from src.ase_systems import CO_chain
 
 params = {
     'mode'        : PW(1000),            # Calculation mode
-    'kpts'        : (25,1,1),            # k-points sampled in periodic sys
+    'kpts'        : (50,1,1),            # k-points sampled in periodic sys
     'random'      : True,                # Random guess of WF's in empty bands
     'xc'          : 'PBE',               # Exchange-correlation function
     'occupations' : FermiDirac(0.01),    # Occupation smearing (input # = kT)
@@ -16,10 +16,10 @@ params = {
 
 ls = []
 es = []
-for l in np.linspace(4.0,4.8,20):
+for l in np.linspace(0.8,5,20):
     
     # Instantiate System for current bond length
-    system = CO_chain.System(twist_angle = np.pi, cell_size = 1, l = l)
+    system = H2_chain.System(twist_angle = 0, cell_size = 1, l = l)
     #system.show()
     
     # Associate GPAW calculator with Atoms
@@ -33,7 +33,7 @@ for l in np.linspace(4.0,4.8,20):
     es.append(e_pot)
     print(f'Bond length:      {l:3.4f} Ang.')
     print(f'Potential energy: {e_pot:3.4f} eV')
-  
+
 # Write results to file 
 with open(f'{system.outname}_chain-relax.dat', 'w') as file:
     for l, e in zip(ls,es):
