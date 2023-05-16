@@ -2,6 +2,9 @@ from ase import Atoms
 from ase.visualize import view
 from math import pi, cos, sin
 
+'''TO DO: INTENDED TO GENERALIZE CHAIN SYSTEMS TO A SINGLE CLASS. LOW PRIORITY.
+'''
+
 class ChainSystems():
     '''
     Class defining a number of different twisted molecular chains in ASE.

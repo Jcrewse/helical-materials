@@ -19,14 +19,16 @@ class System():
     '''
     
     def __init__(self, twist_angle, cell_size = 1):
-        self.tag = 'C2H2'
+        self.tag         = 'C2H2'
         self.twist_angle = twist_angle
-        self.cell_size = cell_size
-        self.e_fermi = 0
-        self.e_ground = 0
-        self.pbc = (True, False, False)
-        self.emin = -45
-        self.emax = 45
+        self.cell_size   = cell_size
+        self.e_tot       = 0
+        self.e_pot       = 0
+        self.e_kin       = 0
+        self.e_fermi     = 0
+        self.pbc         = (True, False, False)
+        self.emin        = -45
+        self.emax        = 45
         
         self.Atoms = self.create(twist_angle, cell_size)
     

@@ -6,11 +6,11 @@ package require pbctools
 set folder_path "/Users/jcrewse/Research/Helical"
 
 # Set the file prefix for your .cube files
-set file_prefix "H2-Nphi-2"
+set file_prefix "H2-Cell-2"
 
 # Set the range of unique identifiers for your files
 set start_id 0
-set end_id 1
+set end_id 3
 
 # Clear previously loaded molecules
 mol delete all

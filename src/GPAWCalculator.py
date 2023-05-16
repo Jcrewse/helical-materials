@@ -53,7 +53,7 @@ def calc_groundstate(system, params, restart = True):
     system.e_exchange = calc.hamiltonian.e_xc
     system.e_fermi    = calc.get_fermi_level()  
     
-    if not os.path.isfile(gpw_outfile) and restart:
+    if not (os.path.isfile(gpw_outfile) and restart):
         calc.write(gpw_outfile, mode = 'all')
     
     ########### Output results ##########
@@ -68,7 +68,7 @@ def calc_groundstate(system, params, restart = True):
     
     return
 
-def calc_wavefunction(system, params):
+def calc_wavefunction(system, kpt):
 
     # Retrieve pseudo wave functions from calculator
     # -------------------------------------------------------------------------
@@ -80,7 +80,7 @@ def calc_wavefunction(system, params):
     for band in range(nbands):
         
         # Get pseudo wave functions for the band
-        wf = system.Atoms.calc.get_pseudo_wave_function(band=band)
+        wf = system.Atoms.calc.get_pseudo_wave_function(band=band, kpt=kpt)
         
         # Separate real/imaginary components
         re_wf = wf.real
