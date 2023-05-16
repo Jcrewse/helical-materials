@@ -20,7 +20,7 @@ class System():
     =======================================================================
     '''
     
-    def __init__(self, twist_angle = 0, cell_size = 1, d = 0.779, l = 1.1):
+    def __init__(self, twist_angle = 0, cell_size = 1, d = 0.779, l = 1.5):
         self.tag             = 'H2'
         self.twist_angle     = twist_angle
         self.cell_size       = cell_size
@@ -55,13 +55,16 @@ class System():
             
         # Unit cell sizes
         a = N_phi*l
-        b = 5
-        c = 5
+        b = 10
+        c = 10
 
         self.supercell_transform = [[N_phi,0,0],[0,1,0],[0,0,1]]
 
         # Create the filename string
-        self.outname = f'H2-Nphi-{N_phi}'
+        if angle == 0:
+            self.outname = f'H2-Cell-{cell_size}'
+        else: 
+            self.outname = f'H2-Nphi-{N_phi}'
 
         # Create a generator of angles for producing atomic positions
         angles = [n*angle for n in range(N_phi)]
@@ -76,7 +79,6 @@ class System():
             positions.append(position2)
             atoms.append('H')
             atoms.append('H')
-
 
         return Atoms(atoms,
                     positions = positions,
