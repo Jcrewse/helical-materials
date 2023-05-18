@@ -70,10 +70,9 @@ def calc_groundstate(system, params, restart = True):
 
 def calc_wavefunction(system, kpt):
 
-    # Retrieve pseudo wave functions from calculator
-    # -------------------------------------------------------------------------
-    #system.Atoms.calc.default_parameters = params
-    #wave_func = system.Atoms.calc.get_pseudo_wave_function(band=1)
+    # Create folder for wavefunction files
+    wf_dir = f'./{system.outname}_wfs'
+    if not os.path.isdir(wf_dir): os.mkdir(wf_dir)
     
     # loop over all wfs and write their cube files
     nbands = system.Atoms.calc.get_number_of_bands()
@@ -90,9 +89,9 @@ def calc_wavefunction(system, kpt):
         wf_2  = np.conjugate(wf)*wf
         
         # Establish file names
-        re_fname  = f'{system.outname}_{band}_RePsi.cube'
-        im_fname  = f'{system.outname}_{band}_ImPsi.cube'
-        wf2_fname = f'{system.outname}_{band}_Psi2.cube'
+        re_fname  = f'./{wf_dir}/{system.outname}_{band}_RePsi.cube'
+        im_fname  = f'./{wf_dir}/{system.outname}_{band}_ImPsi.cube'
+        wf2_fname = f'./{wf_dir}/{system.outname}_{band}_Psi2.cube'
         
         # Write each component to files
         write(re_fname, system.Atoms,  data = re_wf)
