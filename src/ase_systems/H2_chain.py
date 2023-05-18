@@ -51,7 +51,7 @@ class System():
         else:
             N_phi = self.N_phi = int(2*pi/angle)
             
-        self.n_bands = 10*N_phi
+        self.n_bands = 25*N_phi
             
         # Unit cell sizes
         a = N_phi*l
