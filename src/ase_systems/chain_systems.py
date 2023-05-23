@@ -189,9 +189,9 @@ class C2H2_chain(Chain):
 
         # Create the filename string
         if twist_angle == 0:
-            self.outname = f'CO-Cell-{cell_size}'
+            self.outname = f'C2H2-Cell-{cell_size}'
         else: 
-            self.outname = f'CO-Nphi-{self.N_phi}'
+            self.outname = f'C2H2-Nphi-{self.N_phi}'
             
         self.Atoms = self.build(a, b, c, c0, h0, twist_angle)
             
