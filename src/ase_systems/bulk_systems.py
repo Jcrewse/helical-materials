@@ -9,7 +9,7 @@ class Bulk():
     Contains attributes present in bulk solid. 
     '''
     
-    def __init__(self, twist_angle = 0):
+    def __init__(self, twist_angle = 0, layers = None):
 
         # Ionic energies
         self.e_ion_total     = None
@@ -30,6 +30,7 @@ class Bulk():
         # Cell geometry parameters
         self.pbc             = (True, True, True) # Periodic boundary conditions
         self.twist_angle     = twist_angle
+        self.layers          = layers
         
         # Number of layers in the super cell
         if twist_angle == 0:
@@ -37,8 +38,11 @@ class Bulk():
         else:
             self.N_phi = int(2*pi/twist_angle)
             
-    def show(self):
-        view(self.Atoms)
+        if layers != None: 
+            self.N_phi = layers
+            
+    def show(self, repeat=(1,1,1)):
+        view(self.Atoms, repeat=repeat)
         return
     
 class hBN(Bulk):
@@ -53,15 +57,15 @@ class hBN(Bulk):
         Graphene and h-BN are isostructural compounds.
     '''
     
-    def __init__(self, twist_angle = 0):
-        super().__init__(twist_angle)
+    def __init__(self, twist_angle = 0, layers = None):
+        super().__init__(twist_angle, layers)
         
         # Lattice parameters
         self.a = self.b = 1.42
         self.c = 3.28
 
         # Output file name
-        self.outname = f'hBN-Nphi-{self.Nphi}'
+        self.outname = f'hBN-Nphi-{self.N_phi}'
 
         # Band structure parameters
         self.k_path = 'GMKGALH'
@@ -69,14 +73,15 @@ class hBN(Bulk):
         self.emin = -7.5
         self.emax = 15
         
-        self.Atoms = self.build(self.a, self.b, self.c, )
+        self.Atoms = self.build(self.a, self.c)
         
-    def build(self, a, b, c):
+    def build(self, a, c):
         
         # Create supercell
         # Define unit cell of single layer
         lattice = sc.lattice()
-        lattice.set_vectors([3*a/2, a*sqrt(3)/2, 0], [3*a/2, -a*sqrt(3)/2, 0],\
+        lattice.set_vectors([3*a/2, a*sqrt(3)/2, 0], 
+                            [3*a/2, -a*sqrt(3)/2, 0],
                             [0, 0, c])
         lattice.add_atom("B", (0, 0, 0)).add_atom("N", (a, 0, 0))
         
@@ -91,8 +96,10 @@ class hBN(Bulk):
             layer_angles.append([layer_angle])
 
         # Optimize supercell 
-        res = structure.opt(max_el = 6, thetas = layer_angles, log=True)
-        #res.log(self.outname + '.sc')
+        res = structure.opt(max_el = 5, 
+                            thetas = layer_angles, 
+                            algorithm = 'fast',
+                            log=True)
         res = structure.calc(M = res.M(), thetas = res.thetas())
         print('Number of atoms in supercell: {}'.format(res.atom_count()))
 
@@ -100,7 +107,7 @@ class hBN(Bulk):
         res.superlattice().save_POSCAR(self.outname + '.POSCAR')
 
         # Read POSCAR into Atoms object
-        hbn = io.read(self.outname + '_POSCAR', format = 'vasp')
+        hbn = io.read(self.outname + '.POSCAR', format = 'vasp')
 
         # Set periodic boundary conditions
         hbn.set_pbc((True, True, True))
