@@ -38,6 +38,7 @@ class Bulk():
         else:
             self.N_phi = int(2*pi/twist_angle)
             
+        # Direct control of layer number if desired
         if layers != None: 
             self.N_phi = layers
             
@@ -57,7 +58,7 @@ class hBN(Bulk):
         Graphene and h-BN are isostructural compounds.
     '''
     
-    def __init__(self, twist_angle = 0, layers = None):
+    def __init__(self, twist_angle = 0, layers = None, max_el = 6):
         super().__init__(twist_angle, layers)
         
         # Lattice parameters
@@ -73,9 +74,11 @@ class hBN(Bulk):
         self.emin = -7.5
         self.emax = 15
         
-        self.Atoms = self.build(self.a, self.c)
+        self.Atoms = self.build(self.a, self.c, max_el)
         
-    def build(self, a, c):
+    def build(self, a, c, max_el):
+        
+        print(f'========== Constructing {self.N_phi} layer supercell... ==========\n')
         
         # Create supercell
         # Define unit cell of single layer
@@ -94,20 +97,29 @@ class hBN(Bulk):
             structure.add_layer(lattice)
             layer_angle = (n+1)*self.twist_angle
             layer_angles.append([layer_angle])
-
+        
         # Optimize supercell 
-        res = structure.opt(max_el = 5, 
+        opt = structure.opt(max_el = max_el, 
                             thetas = layer_angles, 
                             algorithm = 'fast',
                             log=True)
-        res = structure.calc(M = res.M(), thetas = res.thetas())
-        print('Number of atoms in supercell: {}'.format(res.atom_count()))
+        opt.log.to_csv(f'{self.outname}_maxel-{max_el}_SC.log', index=False)
+        res = structure.calc(M = opt.M(), thetas = opt.thetas())
+        
+        # Output to user
+        print(f'Number of atoms in supercell: {res.atom_count()}')
+        print(f'')
+        print(f'Maximum strain: {res.max_strain():3.2f}')
+        print(f'Strain tensors: ')
+        for i, tensor in enumerate(res.strain_tensors()):
+            print(f'\n  Layer {i}:')
+            print(tensor)
 
         # Output superlattice as a POSCAR
-        res.superlattice().save_POSCAR(self.outname + '.POSCAR')
+        res.superlattice().save_POSCAR(f'{self.outname}_maxel-{max_el}.POSCAR')
 
         # Read POSCAR into Atoms object
-        hbn = io.read(self.outname + '.POSCAR', format = 'vasp')
+        hbn = io.read(f'{self.outname}_maxel-{max_el}.POSCAR', format = 'vasp')
 
         # Set periodic boundary conditions
         hbn.set_pbc((True, True, True))
