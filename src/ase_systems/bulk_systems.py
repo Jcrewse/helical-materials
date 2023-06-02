@@ -64,9 +64,13 @@ class hBN(Bulk):
         # Lattice parameters
         self.a = self.b = 1.42
         self.c = 3.28
+        
+        # Maximum supercell scale factor
+        self.max_el = max_el
 
         # Output file name
         self.outname = f'hBN-Nphi-{self.N_phi}'
+        self.sc_outname = f'{self.outname}_maxel-{self.max_el}'
 
         # Band structure parameters
         self.k_path = 'GMKGALH'
@@ -74,9 +78,9 @@ class hBN(Bulk):
         self.emin = -7.5
         self.emax = 15
         
-        self.Atoms = self.build(self.a, self.c, max_el)
+        self.Atoms = self.build(self.a, self.c)
         
-    def build(self, a, c, max_el):
+    def build(self, a, c):
         
         print(f'========== Constructing {self.N_phi} layer supercell... ==========\n')
         
@@ -99,29 +103,47 @@ class hBN(Bulk):
             layer_angles.append([layer_angle])
         
         # Optimize supercell 
-        opt = structure.opt(max_el = max_el, 
+        opt = structure.opt(max_el = self.max_el, 
                             thetas = layer_angles, 
-                            algorithm = 'fast',
+                            algorithm = 'direct',
                             log=True)
-        opt.log.to_csv(f'{self.outname}_maxel-{max_el}_SC.log', index=False)
+        opt.log.to_csv(f'{self.outname}_maxel-{self.max_el}_SC.log', index=False)
         res = structure.calc(M = opt.M(), thetas = opt.thetas())
         
         # Output to user
         print(f'Number of atoms in supercell: {res.atom_count()}')
-        print(f'')
-        print(f'Maximum strain: {res.max_strain():3.2f}')
+        print(f'Maximum strain: {res.max_strain():3.4f}')
         print(f'Strain tensors: ')
         for i, tensor in enumerate(res.strain_tensors()):
             print(f'\n  Layer {i}:')
             print(tensor)
 
         # Output superlattice as a POSCAR
-        res.superlattice().save_POSCAR(f'{self.outname}_maxel-{max_el}.POSCAR')
+        res.superlattice().save_POSCAR(f'{self.sc_outname}.POSCAR')
 
         # Read POSCAR into Atoms object
-        hbn = io.read(f'{self.outname}_maxel-{max_el}.POSCAR', format = 'vasp')
+        hbn = io.read(f'{self.sc_outname}.POSCAR', format = 'vasp')
 
         # Set periodic boundary conditions
         hbn.set_pbc((True, True, True))
+        
+        self.count_layer_atoms()
 
         return hbn
+    
+    def count_layer_atoms(self):
+        z = []
+        with open(f'{self.sc_outname}.POSCAR') as file:
+            # Skip POSCAR header
+            for _ in range(8):
+                next(file)
+                
+            # Read atomic positions
+            # If z value in range, add to count
+            for line in file:
+                z.append(float(line.split(' ')[-1]))
+
+        layer_dict = {i:z.count(i) for i in z}
+
+        print(f'Total atoms: {len(z)}')
+        print(f'Atoms per layer: {layer_dict}')
