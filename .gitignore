@@ -7,6 +7,7 @@ results
 *.log
 *.cube
 *.pckl
+*.POSCAR
 
 # Figures
 *.png
