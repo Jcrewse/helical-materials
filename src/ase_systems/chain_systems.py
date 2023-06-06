@@ -37,6 +37,9 @@ class Chain():
         else:
             self.N_phi = int(2*pi/twist_angle)
             
+        # Supercell tranformation matrix
+        self.supercell_transform = [[self.N_phi,0,0],[0,1,0],[0,0,1]]
+            
     def show(self):
         view(self.Atoms)
         return
@@ -60,9 +63,6 @@ class H2_chain(Chain):
         a = self.N_phi*l
         b = 10
         c = 10
-
-        # Supercell tranformation matrix
-        self.supercell_transform = [[self.N_phi,0,0],[0,1,0],[0,0,1]]
 
         # Create the filename string
         if twist_angle == 0:
