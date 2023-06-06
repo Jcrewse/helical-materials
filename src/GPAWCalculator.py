@@ -2,6 +2,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from ase.parallel import world
 from ase.units import Bohr, Ha
 from ase.io import write
 from gpaw import GPAW
@@ -22,19 +23,21 @@ def calc_groundstate(system, params, restart = True):
     ########## Set up GPAW calculator ##########
     if os.path.isfile(gpw_outfile) and restart:
         
-        print(f'Ground state restart file found: {system.outname}_GS.gpw') 
+        if world.rank == 0:
+            print(f'Ground state restart file found: {system.outname}_GS.gpw') 
         calc = GPAW(gpw_outfile)
         
         system.Atoms.calc = calc
         
     else:
         # User output of parameters
-        print('Calculating ground state...\n')
-        print('Input parameters:')
-        print(f'    calc mode: {params["mode"]}')
-        print(f'    xc func:   {params["xc"]}')
-        print(f'    k points:  {params["kpts"]}')
-        print(f'    converge:  {params["convergence"]}')
+        if world.rank == 0:
+            print('Calculating ground state...\n')
+            print('Input parameters:')
+            print(f'    calc mode: {params["mode"]}')
+            print(f'    xc func:   {params["xc"]}')
+            print(f'    k points:  {params["kpts"]}')
+            print(f'    converge:  {params["convergence"]}')
         
         calc = GPAW(txt = log_outfile, **params)
 
@@ -57,14 +60,15 @@ def calc_groundstate(system, params, restart = True):
         calc.write(gpw_outfile, mode = 'all')
     
     ########### Output results ##########
-    print('\nGround state converged...\n')
-    print('\n---------- Energies ----------')
-    print(f'Kinetic Energy:   {Ha*system.e_kinetic:3.5f}eV')
-    print(f'Potential Energy: {Ha*system.e_coulomb:3.5f}eV')
-    print(f'Exchange Energy:  {Ha*system.e_exchange:3.5f}eV')
-    print(f'Fermi Energy:     {system.e_fermi:3.5f}eV')
-    print('\n---------- Forces ----------\n')
-    print(f'Ion Forces: {system.ion_forces}')
+    if world.rank == 0:
+        print('\nGround state converged...\n')
+        print('\n---------- Energies ----------')
+        print(f'Kinetic Energy:   {Ha*system.e_kinetic:3.5f}eV')
+        print(f'Potential Energy: {Ha*system.e_coulomb:3.5f}eV')
+        print(f'Exchange Energy:  {Ha*system.e_exchange:3.5f}eV')
+        print(f'Fermi Energy:     {system.e_fermi:3.5f}eV')
+        print('\n---------- Forces ----------\n')
+        print(f'Ion Forces: {system.ion_forces}')
     
     return
 
@@ -129,11 +133,15 @@ def calc_bandstructure(system, npoints, unfold=False):
     ########## Retrieve unit/supercell, bandpath ##########
     cell = system.Atoms.get_cell()
     kpath = cell.bandpath(npoints = npoints, pbc = system.pbc)
+    #print(len(kpath.kpts))
 
     ########## User output ##########
-    print(f'Bandpath: {kpath}')
+    if world.rank == 0:
+        print(f'Bandpath: {kpath}')
+        print([point for point in kpath.path if point != ','])
 
     ########### Supercell band structure unfolding ##########
+    #########################################################
     if unfold:
         
         # Defines an x-axis suitable for plotting bands
@@ -165,6 +173,7 @@ def calc_bandstructure(system, npoints, unfold=False):
                           M = M,
                           spinorbit = False)
         
+        special_points = [point for point in kpath.path if point != ',']
         # Calculate weights and spectral function
         # Produces two outputs:
         # 'weights_{system.outname})_unfolded.pckl'
@@ -174,7 +183,7 @@ def calc_bandstructure(system, npoints, unfold=False):
         unfolded.spectral_function(kpts = kpath.kpts, 
                                  x = x,
                                  X = X,
-                                 points_name=['G','X'])
+                                 points_name=special_points)
         
         # Plot spectral function
         plot_spectral_function(filename = f'sf_{system.outname}_unfolded',
@@ -183,6 +192,7 @@ def calc_bandstructure(system, npoints, unfold=False):
                        emax = 15)
         
     ########## Standard Band Structure Calculation ##########
+    #########################################################
     else:
         # Converge the band structure non self-consistently, with a fixed density
         bs_calc = GPAW(gpw_infile).fixed_density(
