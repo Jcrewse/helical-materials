@@ -1,6 +1,8 @@
 from math import pi, sin, cos, sqrt
 from ase import io
 from ase.visualize import view
+from ase.parallel import world
+import numpy as np
 import supercell_core as sc
 
 class Bulk():
@@ -10,6 +12,9 @@ class Bulk():
     '''
     
     def __init__(self, twist_angle = 0, layers = None):
+        
+        # Elemental tag for ID
+        self.tag = None
 
         # Ionic energies
         self.e_ion_total     = None
@@ -42,6 +47,9 @@ class Bulk():
         if layers != None: 
             self.N_phi = layers
             
+        # Supercell lattice transform matrix
+        self.supercell_transform = None
+            
     def show(self, repeat=(1,1,1)):
         view(self.Atoms, repeat=repeat)
         return
@@ -65,8 +73,24 @@ class hBN(Bulk):
         self.a = self.b = 1.42
         self.c = 3.28
         
-        # Maximum supercell scale factor
+        # Supercell parameters
         self.max_el = max_el
+        
+        # Ionic energies
+        self.e_ion_total     = None
+        self.e_ion_kinetic   = None
+        self.e_ion_potential = None
+        
+        # Electronic energies
+        self.e_total         = None
+        self.e_kinetic       = None
+        self.e_coulomb       = None
+        self.e_exchange      = None
+        self.e_fermi         = None
+        
+        # Temperature/forces
+        self.temperature     = None
+        self.ion_forces      = None
 
         # Output file name
         self.outname = f'hBN-Nphi-{self.N_phi}'
@@ -82,7 +106,10 @@ class hBN(Bulk):
         
     def build(self, a, c):
         
-        print(f'========== Constructing {self.N_phi} layer supercell... ==========\n')
+        if world.rank == 0:
+            print(f'========== Constructing {self.N_phi} layer supercell... ==========\n')
+        
+        self.tag = 'hBN'
         
         # Create supercell
         # Define unit cell of single layer
@@ -110,13 +137,20 @@ class hBN(Bulk):
         opt.log.to_csv(f'{self.outname}_maxel-{self.max_el}_SC.log', index=False)
         res = structure.calc(M = opt.M(), thetas = opt.thetas())
         
+        # Supercell transform matrix
+        M = opt.M()
+        self.supercell_transform = np.array([[M[0][0], M[0][1], 0],
+                                             [M[1][0], M[1][1], 0], 
+                                             [0, 0, self.N_phi]])
+        
         # Output to user
-        print(f'Number of atoms in supercell: {res.atom_count()}')
-        print(f'Maximum strain: {res.max_strain():3.4f}')
-        print(f'Strain tensors: ')
-        for i, tensor in enumerate(res.strain_tensors()):
-            print(f'\n  Layer {i}:')
-            print(tensor)
+        if world.rank == 0:
+            print(f'Number of atoms in supercell: {res.atom_count()}')
+            print(f'Maximum strain: {res.max_strain():3.4f}')
+            print(f'Strain tensors: ')
+            for i, tensor in enumerate(res.strain_tensors()):
+                print(f'\n  Layer {i}:')
+                print(tensor)
 
         # Output superlattice as a POSCAR
         res.superlattice().save_POSCAR(f'{self.sc_outname}.POSCAR')
@@ -127,12 +161,15 @@ class hBN(Bulk):
         # Set periodic boundary conditions
         hbn.set_pbc((True, True, True))
         
+        # Output number of atoms per layer
         self.count_layer_atoms()
 
         return hbn
     
     def count_layer_atoms(self):
         z = []
+        
+        # Open POSCAR file of supercell
         with open(f'{self.sc_outname}.POSCAR') as file:
             # Skip POSCAR header
             for _ in range(8):
@@ -143,7 +180,10 @@ class hBN(Bulk):
             for line in file:
                 z.append(float(line.split(' ')[-1]))
 
+        # Counting instances of unique z values
         layer_dict = {i:z.count(i) for i in z}
 
-        print(f'Total atoms: {len(z)}')
-        print(f'Atoms per layer: {layer_dict}')
+        # Output results to user
+        if world.rank == 0:
+            print(f'Total atoms: {len(z)}')
+            print(f'Atoms per layer: {layer_dict}')
