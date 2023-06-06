@@ -12,7 +12,7 @@ from math import pi
 # Parameters not list are GPAW calc.default_parameters
 params = {
     'mode'        : PW(300),             # Calculation mode        
-    'kpts'        : (5,1,1),             # k-points sampled in periodic sys
+    'kpts'        : (5,5,5),             # k-points sampled in periodic sys
     'random'      : True,                # Random guess of WF's in empty bands
     'xc'          : 'PBE',               # Exchange-correlation function
     'occupations' : FermiDirac(0.01),    # Occupation smearing (input # = kT)
@@ -22,7 +22,7 @@ params = {
 
 # Create System ###############################################################
 #system = chain_systems.CO_chain(twist_angle = pi)
-system = bulk_systems.hBN(twist_angle = 2*pi/2, max_el = 10)
+system = bulk_systems.hBN(twist_angle = 2*pi/4, max_el = 50)
 #system.show(repeat=(1,1,1))
 
 # Ground State Calculations ###################################################
@@ -38,4 +38,4 @@ calc_wavefunction(system, kpt=0)
 # Calculate Band Structure ####################################################
 if world.rank == 0: 
     print('\n========== CALCULATING BAND STRUCTURE ==========\n')
-calc_bandstructure(system, npoints=600, unfold=True)
+calc_bandstructure(system, npoints=500, unfold=False)

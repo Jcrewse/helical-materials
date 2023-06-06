@@ -17,7 +17,7 @@ plt.figure(figsize=(6,8))
 colors_tuple = ('Blues', 'Reds', 'Greens', 'Purples', 'Oranges')
 colors = itertools.cycle(colors_tuple)
 
-Nphis = [1,2,4]
+Nphis = [1,2,3,4,6]
 
 for i in Nphis:
     
@@ -27,7 +27,6 @@ for i in Nphis:
     filename = f'sf_{system_name}_unfolded'
     e, A_ke, x, X, points_name = pickle.load(open(filename + '.pckl','rb'))
     print('--------{}'.format(filename))
-    print(x)
 
     # Normalize spectral functions and transpose for plotting
     A_ke /= np.max(A_ke)
