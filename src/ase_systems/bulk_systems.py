@@ -134,7 +134,7 @@ class hBN(Bulk):
                             thetas = layer_angles, 
                             algorithm = 'direct',
                             log=True)
-        opt.log.to_csv(f'{self.outname}_maxel-{self.max_el}_SC.log', index=False)
+        opt.log.to_csv(f'{self.outname}_maxel-{self.max_el}_SC.log')
         res = structure.calc(M = opt.M(), thetas = opt.thetas())
         
         # Supercell transform matrix
@@ -143,17 +143,8 @@ class hBN(Bulk):
                                              [M[1][0], M[1][1], 0], 
                                              [0, 0, self.N_phi]])
         
-        # Output to user
-        if world.rank == 0:
-            print(f'Number of atoms in supercell: {res.atom_count()}')
-            print(f'Maximum strain: {res.max_strain():3.4f}')
-            print(f'Strain tensors: ')
-            for i, tensor in enumerate(res.strain_tensors()):
-                print(f'\n  Layer {i}:')
-                print(tensor)
-
         # Output superlattice as a POSCAR
-        res.superlattice().save_POSCAR(f'{self.sc_outname}.POSCAR')
+        res.superlattice().save_POSCAR(f'{self.sc_outname}.POSCAR', silent = True)
 
         # Read POSCAR into Atoms object
         hbn = io.read(f'{self.sc_outname}.POSCAR', format = 'vasp')
@@ -161,8 +152,19 @@ class hBN(Bulk):
         # Set periodic boundary conditions
         hbn.set_pbc((True, True, True))
         
-        # Output number of atoms per layer
-        self.count_layer_atoms()
+        # Output to user
+        if world.rank == 0:
+            print('\nSupercell properties: \n')
+            print(f'    Number of atoms in supercell: {res.atom_count()}')
+            print(f'    Maximum strain: {res.max_strain():.8f}')
+            print(f'    Supercell vectors: ')
+            print('         c_1 = ' + str(res.superlattice().vectors()[0]))
+            print('         c_2 = ' + str(res.superlattice().vectors()[1]))
+            print(f'    Atoms per layer: {self.count_layer_atoms()}')
+            # print(f'Strain tensors: ')
+            # for i, tensor in enumerate(res.strain_tensors()):
+            #     print(f'\n  Layer {i}:')
+            #     print(tensor)
 
         return hbn
     
@@ -184,6 +186,4 @@ class hBN(Bulk):
         layer_dict = {i:z.count(i) for i in z}
 
         # Output results to user
-        if world.rank == 0:
-            print(f'Total atoms: {len(z)}')
-            print(f'Atoms per layer: {layer_dict}')
+        return layer_dict
