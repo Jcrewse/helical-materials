@@ -11,7 +11,7 @@ from math import pi
 # Calculation parameters ######################################################
 # Parameters not list are GPAW calc.default_parameters
 params = {
-    'mode'        : PW(300),             # Calculation mode        
+    'mode'        : PW(500),             # Calculation mode        
     'kpts'        : (5,5,5),             # k-points sampled in periodic sys
     'random'      : True,                # Random guess of WF's in empty bands
     'xc'          : 'PBE',               # Exchange-correlation function
@@ -22,8 +22,8 @@ params = {
 
 # Create System ###############################################################
 #system = chain_systems.CO_chain(twist_angle = pi)
-system = bulk_systems.hBN(twist_angle = 2*pi/4, max_el = 50)
-#system.show(repeat=(1,1,1))
+system = bulk_systems.hBN(twist_angle = 2*pi/2, max_el = 6)
+system.show(repeat=(1,1,1))
 
 # Ground State Calculations ###################################################
 if world.rank == 0: 
