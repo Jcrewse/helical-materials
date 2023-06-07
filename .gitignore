@@ -1,5 +1,5 @@
 # Data folders (no need to store on GitHub for now)
-results
+results/
 
 # GPAW output files
 *.gpw 
@@ -16,6 +16,5 @@ results
 *__pycache__
 
 # Misc
-*.vscode
-*.DS_store
-
+.vscode
+.DS_Store
