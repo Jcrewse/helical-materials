@@ -1,5 +1,6 @@
 # Data folders (no need to store on GitHub for now)
 results/
+archive/
 
 # GPAW output files
 *.gpw 
