@@ -4,7 +4,7 @@ from ase.visualize import view
 from ase.parallel import world
 from gpaw import PW, FermiDirac
 from src.GPAWCalculator import *
-import src.systems as systems
+from src import systems
 from math import pi
 
 # Calculation parameters ######################################################
