@@ -2,6 +2,7 @@ from math import pi, sin, cos, sqrt
 from ase import io, Atoms
 from ase.visualize import view
 from ase.parallel import world
+import pickle
 import numpy as np
 import supercell_core as sc
 
@@ -100,11 +101,11 @@ class hBN(HelicalSystem):
         
         # Create supercell
         # Define unit cell of single layer
-        lattice = sc.lattice()
-        lattice.set_vectors([3*a/2, a*sqrt(3)/2, 0], 
-                            [3*a/2, -a*sqrt(3)/2, 0],
-                            [0, 0, c])
-        lattice.add_atom("B", (0, 0, 0)).add_atom("N", (a, 0, 0))
+        # lattice = sc.lattice()
+        # lattice.set_vectors([3*a/2, a*sqrt(3)/2, 0], 
+        #                     [3*a/2, -a*sqrt(3)/2, 0],
+        #                     [0, 0, c])
+        # lattice.add_atom("B", (0, 0, 0)).add_atom("N", (a, 0, 0))
         
         if (self.twist_angle == 0 and self.cell_size == 1 and self.layers == None): 
             # Create the unit cell
@@ -115,75 +116,86 @@ class hBN(HelicalSystem):
                                 (3*a/2, -sqrt(3)*a/2, 0),
                                 (0, 0, c)],
                         pbc = self.pbc)
+            
+        else:
+            # try:
+            res = pickle.load(open(f'{self.sc_outname}_SC.pckl', 'rb'))
+            res.superlattice().save_POSCAR('{self.outname}.POSCAR')
+            print(res.M())
+            hbn = io.read(f'{self.sc_outname}_SC.POSCAR', format = 'vasp')
+            hbn.set_pbc((True, True, True))
+            return hbn
+            # except (FileNotFoundError):
+            #    print(f'No pickle file ({self.outname}_SC.pckl) for supercell. Run supercell-optimize.py first.')
         
-        # Initialize heterostructure
-        structure = sc.heterostructure().set_substrate(lattice)
+    #     # Initialize heterostructure
+    #     structure = sc.heterostructure().set_substrate(lattice)
 
-        # Add layers
-        layer_angles = []
-        for n in range(self.N_phi-1):
-            structure.add_layer(lattice)
-            layer_angle = (n+1)*self.twist_angle
-            layer_angles.append([layer_angle])
+    #     # Add layers
+    #     layer_angles = []
+    #     for n in range(self.N_phi-1):
+    #         structure.add_layer(lattice)
+    #         layer_angle = (n+1)*self.twist_angle
+    #         layer_angles.append([layer_angle])
         
-        # Optimize supercell 
-        opt = structure.opt(max_el = self.max_el, 
-                            thetas = layer_angles, 
-                            algorithm = 'direct',
-                            log=True)
-        opt.log.to_csv(f'{self.outname}_maxel-{self.max_el}_SC.log')
-        res = structure.calc(M = opt.M(), thetas = opt.thetas())
+    #     # Optimize supercell 
+    #     opt = structure.opt(max_el = self.max_el, 
+    #                         thetas = layer_angles, 
+    #                         algorithm = 'direct',
+    #                         log=True)
+    #     opt.log.to_csv(f'{self.outname}_maxel-{self.max_el}_SC.log')
+    #     res = structure.calc(M = opt.M(), thetas = opt.thetas())
         
-        # Supercell transform matrix
-        M = opt.M()
-        self.supercell_transform = np.array([[M[0][0], M[0][1], 0],
-                                             [M[1][0], M[1][1], 0], 
-                                             [0, 0, self.N_phi]])
+    #     # Supercell transform matrix
+    #     M = opt.M()
+    #     self.supercell_transform = np.array([[M[0][0], M[0][1], 0],
+    #                                          [M[1][0], M[1][1], 0], 
+    #                                          [0, 0, self.N_phi]])
         
-        # Output superlattice as a POSCAR
-        res.superlattice().save_POSCAR(f'{self.sc_outname}.POSCAR', 
-                                       silent = True)
+    #     # Output superlattice as a POSCAR
+    #     res.superlattice().save_POSCAR(f'{self.sc_outname}.POSCAR', 
+    #                                    silent = True)
 
-        # Read POSCAR into Atoms object
-        hbn = io.read(f'{self.sc_outname}.POSCAR', format = 'vasp')
+    #     # Read POSCAR into Atoms object
+    #     hbn = io.read(f'{self.sc_outname}.POSCAR', format = 'vasp')
         
-        hbn.set_pbc((True, True, True))
+    #     hbn.set_pbc((True, True, True))
         
-        # Output to user
-        if world.rank == 0:
-            print('\nSupercell properties: \n')
-            print(f'    Number of atoms in supercell: {res.atom_count()}')
-            print(f'    Maximum strain: {res.max_strain():.8f}')
-            print(f'    Supercell vectors: ')
-            print('         c_1 = ' + str(res.superlattice().vectors()[0]))
-            print('         c_2 = ' + str(res.superlattice().vectors()[1]))
-            print(f'    Atoms per layer: {self.count_layer_atoms()}')
-            # print(f'Strain tensors: ')
-            # for i, tensor in enumerate(res.strain_tensors()):
-            #     print(f'\n  Layer {i}:')
-            #     print(tensor)
+    #     # Output to user
+    #     if world.rank == 0:
+    #         print('\nSupercell properties: \n')
+    #         print(f'    Number of atoms in supercell: {res.atom_count()}')
+    #         print(f'    Maximum strain: {res.max_strain():.8f}')
+    #         print(f'    Supercell vectors: ')
+    #         print('         c_1 = ' + str(res.superlattice().vectors()[0]))
+    #         print('         c_2 = ' + str(res.superlattice().vectors()[1]))
+    #         print(f'    Atoms per layer: {self.count_layer_atoms()}')
+    #         # print(f'Strain tensors: ')
+    #         # for i, tensor in enumerate(res.strain_tensors()):
+    #         #     print(f'\n  Layer {i}:')
+    #         #     print(tensor)
 
-        return hbn
+    #     return hbn
     
-    def count_layer_atoms(self):
-        z = []
+    # def count_layer_atoms(self):
+    #     z = []
         
-        # Open POSCAR file of supercell
-        with open(f'{self.sc_outname}.POSCAR') as file:
-            # Skip POSCAR header
-            for _ in range(8):
-                next(file)
+    #     # Open POSCAR file of supercell
+    #     with open(f'{self.sc_outname}.POSCAR') as file:
+    #         # Skip POSCAR header
+    #         for _ in range(8):
+    #             next(file)
                 
-            # Read atomic positions
-            # If z value in range, add to count
-            for line in file:
-                z.append(float(line.split(' ')[-1]))
+    #         # Read atomic positions
+    #         # If z value in range, add to count
+    #         for line in file:
+    #             z.append(float(line.split(' ')[-1]))
 
-        # Counting instances of unique z values
-        layer_dict = {i:z.count(i) for i in z}
+    #     # Counting instances of unique z values
+    #     layer_dict = {i:z.count(i) for i in z}
 
-        # Output results to user
-        return layer_dict
+    #     # Output results to user
+    #     return layer_dict
 ###############################################################################
     
 # H2 Chain ####################################################################
