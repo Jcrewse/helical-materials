@@ -28,8 +28,8 @@ def count_layer_atoms(poscar_file):
  
 # User inputs
 tag = 'hBN'
-N_phi  = 4
-max_el = 15
+N_phi  = 3
+max_el = 25
 
 # Defining some lattice constants
 a = 1.42
