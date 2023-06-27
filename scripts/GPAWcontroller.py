@@ -40,4 +40,4 @@ if world.rank == 0:
 calc_bandstructure(system, npoints=50, unfold=False)
 
 tf = time.perf_counter()
-print(f'Time: {tf-ti}')
+print(f'Time: {np.round(tf-ti, 3)}s')
