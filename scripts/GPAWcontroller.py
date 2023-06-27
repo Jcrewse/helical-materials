@@ -20,7 +20,7 @@ params = {
 ###############################################################################
 
 # Create System ###############################################################
-system = systems.hBN()
+system = systems.hBN(twist_angle = 2*pi/4, max_el=15)
 #system.show(repeat=(1,1,1)) # 
 
 ti = time.perf_counter()
