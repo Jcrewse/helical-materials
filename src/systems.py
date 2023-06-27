@@ -120,7 +120,7 @@ class hBN(HelicalSystem):
         else:
             # try:
             res = pickle.load(open(f'{self.sc_outname}_SC.pckl', 'rb'))
-            res.superlattice().save_POSCAR('{self.outname}.POSCAR')
+            res.superlattice().save_POSCAR(f'{self.sc_outname}.POSCAR')
             print(res.M())
             hbn = io.read(f'{self.sc_outname}_SC.POSCAR', format = 'vasp')
             hbn.set_pbc((True, True, True))
