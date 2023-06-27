@@ -60,7 +60,6 @@ for n in range(N_phi):
 
 # Optimize lattice vectors 
 res = structure.opt(max_el=max_el, thetas=layer_angles, log=True)
-res.log.to_csv('opt_{:3.2f}.log'.format(twist_angle), index=False)
 
 # Save supercell to VASP POSCAR
 res.superlattice().save_POSCAR(poscar_file)
