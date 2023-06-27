@@ -101,5 +101,5 @@ logfile.close()
 pickle.dump(res, open(pickle_file, 'wb'))
 
 # View the resulting supercell
-atoms = io.read(poscar_file, format = 'vasp')
-view(atoms, repeat=(1,1,1))
+#atoms = io.read(poscar_file, format = 'vasp')
+#view(atoms, repeat=(1,1,1))
