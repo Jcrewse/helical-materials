@@ -1,0 +1,27 @@
+#!/bin/bash
+# Job Properties ####################################################
+#    Job Name
+#PBS -N hBN-test
+#    Email notifcations
+#PBS -M jcrewse@anl.gov 
+#
+# Computing Resources ###############################################
+#    Nodes    - Number of compute nodes to request
+#    PPN      - Number of processors per node
+#    Mem      - Memory to request (limits node dependent)
+#    Walltime - Total time to request (hhh:mm:ss)
+#
+#PBS -l nodes=4:ppn=8
+#PBS -l walltime=24:00:00
+
+
+# Change tp current working directory 
+# (i.e. script executes where it is located)
+cd $PBS_O_WORKDIR
+
+# Source and activate conda environment
+source /home/jcrewse/miniconda3/etc/profile.d/conda.sh
+conda activate helical
+
+# Execute script
+mpiexec gpaw python scripts/analysis.py
