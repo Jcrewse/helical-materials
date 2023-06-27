@@ -4,46 +4,103 @@ import matplotlib.pyplot as plt
 from ase import Atoms, io
 from ase.visualize import view
 from math import sqrt
+import pickle
 
-twist_angles = np.arange(1*sc.DEGREE, 60*sc.DEGREE, 0.1*sc.DEGREE)
-twist_angles = [np.pi/5]
+def count_layer_atoms(poscar_file):
+    z = []
+    
+    # Open POSCAR file of supercell
+    with open(poscar_file) as file:
+        # Skip POSCAR header
+        for _ in range(8):
+            next(file)
+            
+        # Read atomic positions
+        # If z value in range, add to count
+        for line in file:
+            z.append(float(line.split(' ')[-1]))
 
-# Defining unit cell of h-BN
+    # Counting instances of unique z values
+    layer_dict = {i:z.count(i) for i in z}
+
+    # Output results to user
+    return layer_dict
+ 
+# User inputs
+tag = 'hBN'
+N_phi  = 4
+max_el = 15
+
+# Defining some lattice constants
 a = 1.42
 c = 3.28
-graphene = sc.lattice()
-graphene.set_vectors([3*a/2, a*sqrt(3)/2, 0], [3*a/2, -a*sqrt(3)/2, 0], [0, 0, c])
-graphene.add_atom("B", (0, 0, 0)).add_atom("N", (a, 0, 0))
 
-for twist_angle in twist_angles:
+# Filenames
+file_name = f'{tag}-Nphi-{N_phi}_maxel-{max_el}_SC'
+poscar_file = f'{file_name}.POSCAR'
+log_file = f'{file_name}.log'
+pickle_file = f'{file_name}.pckl'
 
-    # Initialize the substrate (bottom layer)
-    structure = sc.heterostructure().set_substrate(graphene)
-    print('Twist angle: {:3.2f}'.format(twist_angle))
+# Defining the lattice unit cell 
+# THIS NEEDS TO BE GENERALIZED TO THINGS NO ISOSTRUCTURAL TO GRAPHENE
+lattice = sc.lattice()
+lattice.set_vectors([3*a/2, a*sqrt(3)/2, 0], [3*a/2, -a*sqrt(3)/2, 0], [0, 0, c])
+lattice.add_atom("B", (0, 0, 0)).add_atom("N", (a, 0, 0))
 
-    n_layers = int(2*np.pi/twist_angle)
-    print('N layers: {}'.format(n_layers))
+# Initialize the substrate (bottom layer)
+structure = sc.heterostructure().set_substrate(lattice)
 
-    layer_angles = []
-    for n in range(n_layers):
-        structure.add_layer(graphene)
-        layer_angle = n*twist_angle
-        layer_angles.append([layer_angle])
+# Build heterostructure up layer by layer
+layer_angles = []
+twist_angle  = 2*np.pi/N_phi
+for n in range(N_phi):
+    structure.add_layer(lattice)
+    layer_angle = n*twist_angle
+    layer_angles.append([layer_angle])
 
-    #print('Layer angles: {}'.format(layer_angles))
+# Optimize lattice vectors 
+res = structure.opt(max_el=max_el, thetas=layer_angles, log=True)
+res.log.to_csv('opt_{:3.2f}.log'.format(twist_angle), index=False)
 
-    # Optimise with theta as a free parameter
-    res = structure.opt(max_el=50, thetas=layer_angles, log=True)
-    res.log.to_csv('opt_{:3.2f}.log'.format(twist_angle), index=False)
+# Save supercell to VASP POSCAR
+res.superlattice().save_POSCAR(poscar_file)
 
-# res = structure.calc(M = res.M(), thetas = res.thetas())
+# Output to user
+print('\nSupercell properties: \n')
+print(f'    Number of atoms in supercell: {res.atom_count()}')
+print(f'    Maximum strain: {res.max_strain():.8f}')
+print(f'    Supercell vectors: ')
+print('         c_1 = ' + str(res.superlattice().vectors()[0]))
+print('         c_2 = ' + str(res.superlattice().vectors()[1]))
+print(f'    Atoms per layer: {count_layer_atoms(poscar_file)}')
+print(f'    Transform matrix: M = {res.M()[0,:]}\n')
+print(f'                          {res.M()[1,:]}\n')
+print(f'Strain tensors: ')
 
-# fig = res.superlattice().draw()
-# plt.show()
+# Write to log file
+logfile = open(log_file, 'w')
+logfile.write(f'{tag}_N_phi_{N_phi}\n')
+logfile.write('Supercell properties: \n')
+logfile.write(f'    Number of atoms: {res.atom_count()}\n')
+logfile.write(f'    Maximum strain:  {res.max_strain():.8f}\n')
+logfile.write(f'    Supercell vectors: \n')
+logfile.write('         c_1 = ' + str(res.superlattice().vectors()[0]) + '\n')
+logfile.write('         c_2 = ' + str(res.superlattice().vectors()[1]) + '\n')
+logfile.write(f'    Atoms per layer: {count_layer_atoms(poscar_file)}\n')
+logfile.write(f'    Transform matrix: M = {res.M()[0,:]}\n')
+logfile.write(f'                          {res.M()[1,:]}\n')
+logfile.write(f'Strain tensors: \n')
 
-# # Save supercell to VASP POSCAR
-# res.superlattice().save_POSCAR("POSCAR")
+for i, tensor in enumerate(res.strain_tensors()):
+    print(f'\nLayer {i}:')
+    print(tensor)
+    logfile.write(f'\nLayer {i}:\n')
+    logfile.write(str(tensor))
 
-# atoms = io.read('POSCAR', format = 'vasp')
+logfile.close()
 
-# view(atoms, repeat=(1,1,1))
+pickle.dump(res, open(pickle_file, 'wb'))
+
+# View the resulting supercell
+atoms = io.read(poscar_file, format = 'vasp')
+view(atoms, repeat=(1,1,1))
