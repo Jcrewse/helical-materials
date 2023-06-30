@@ -7,6 +7,12 @@ from src.GPAWCalculator import *
 import src.systems as systems
 from math import pi
 
+import resource
+
+# Track time and memory usage
+mi = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+ti = time.perf_counter()
+
 # Calculation parameters ######################################################
 # Parameters not list are GPAW calc.default_parameters
 params = {
@@ -21,9 +27,8 @@ params = {
 
 # Create System ###############################################################
 system = systems.hBN(twist_angle = 2*pi/4, max_el=15)
-#system.show(repeat=(1,1,1)) # 
+#system.show(repeat=(1,1,1))
 
-ti = time.perf_counter()
 # Ground State Calculations ###################################################
 if world.rank == 0: 
     print('\n========== CALCULATING GROUND STATE ==========\n')
@@ -39,5 +44,7 @@ if world.rank == 0:
     print('\n========== CALCULATING BAND STRUCTURE ==========\n')
 calc_bandstructure(system, npoints=50, unfold=False)
 
+mf = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 tf = time.perf_counter()
 print(f'Time: {np.round(tf-ti, 3)}s')
+print(f'Memory used: {mf - mi}kb')
