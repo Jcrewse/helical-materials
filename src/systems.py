@@ -118,15 +118,23 @@ class hBN(HelicalSystem):
                         pbc = self.pbc)
             
         else:
-            # try:
-            res = pickle.load(open(f'{self.sc_outname}_SC.pckl', 'rb'))
-            res.superlattice().save_POSCAR(f'{self.sc_outname}_SC.POSCAR')
-            print(res.M())
-            hbn = io.read(f'{self.sc_outname}_SC.POSCAR', format = 'vasp')
-            hbn.set_pbc((True, True, True))
-            return hbn
-            # except (FileNotFoundError):
-            #    print(f'No pickle file ({self.outname}_SC.pckl) for supercell. Run supercell-optimize.py first.')
+            try:
+                # Open the pickle file created from supercell.py
+                pickle_name = f'{self.sc_outname}_SC.pckl'
+                res = pickle.load(open(pickle_name, 'rb'))
+                
+                # Save the supercell as a POSCAR file
+                poscar_name = f'{self.sc_outname}_SC.POSCAR'
+                res.superlattice().save_POSCAR(poscar_name)
+                
+                # Read the POSCAR file in an Atoms object, set pbc
+                hbn = io.read(f'{self.sc_outname}_SC.POSCAR', format = 'vasp')
+                hbn.set_pbc((True, True, True))
+                
+                return hbn
+            # If the pickle file has not yet been made, warn user
+            except (FileNotFoundError):
+               print(f'No pickle file ({self.outname}_SC.pckl) for supercell. Run supercell-optimize.py first.')
         
     #     # Initialize heterostructure
     #     structure = sc.heterostructure().set_substrate(lattice)
