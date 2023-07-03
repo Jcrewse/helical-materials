@@ -76,7 +76,10 @@ def calc_wavefunction(system, kpt):
 
     # Create folder for wavefunction files
     wf_dir = f'./{system.outname}_wfs'
-    if not os.path.isdir(wf_dir): os.mkdir(wf_dir)
+    try:
+        if not os.path.isdir(wf_dir): os.mkdir(wf_dir)
+    except(FileExistsError):
+        pass
     
     # loop over all wfs and write their cube files
     nbands = system.Atoms.calc.get_number_of_bands()
@@ -238,7 +241,8 @@ def calc_bandstructure(system, npoints, unfold=False):
 
         # Save figure and show
         plt.savefig(png_outfile)
-        plt.show()
+        if world.rank == 0:
+            plt.show()
 
     return
 
