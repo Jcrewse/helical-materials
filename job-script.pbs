@@ -24,4 +24,4 @@ source /home/jcrewse/miniconda3/etc/profile.d/conda.sh
 conda activate helical
 
 # Execute script
-mpiexec gpaw python scripts/GPAWcontroller.py
+mpiexec gpaw python scripts/controller.py
