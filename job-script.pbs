@@ -1,6 +1,7 @@
 #!/bin/bash
+# EDIT LINES STARTING WITH PBS
 # Job Properties ####################################################
-#    Job Name
+#    Job Name - Name of job on queue
 #PBS -N hBN-test
 #    Email notifcations
 #PBS -M jcrewse@anl.gov 
