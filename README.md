@@ -12,3 +12,9 @@ supercell-core `pip3 install supercell-core --user`
 
 ## Usage
 The main script is `controller.py` from which you may select the system you would like to simulate, set the relevant parameters, and choose the calculations you would like to perform. The list of parameters in `controller.py` is not exhaustive. For a full description see: [GPAW basics](https://wiki.fysik.dtu.dk/gpaw/documentation/basic.html)
+
+## Internals
+The main portion of the calculations are contained in `GPAWcalculator.py`. This file contains functions that when called from `controller.py`, perform the relevant steps in GPAW to carry out the calculations. 
+
+## Systems
+GPAW performs calculations on ASE.Atoms objects. We define a system in the `systems.py` file. Each system is a superclass of an Atoms object with additional attributes that characterize the helical symmetries (e.g. twist angle, supercell transforms matrix, etc.). 
