@@ -81,7 +81,7 @@ class hBN(HelicalSystem):
         self.max_el = max_el
 
         # Output file name
-        self.outname = f'hBN-Nphi-{self.N_phi}'
+        self.outname = f'{self.tag}-Nphi-{self.N_phi}'
         self.sc_outname = f'{self.outname}_maxel-{self.max_el}'
 
         # Band structure parameters
@@ -234,9 +234,9 @@ class H2_chain(HelicalSystem):
 
         # Create the filename string
         if twist_angle == 0:
-            self.outname = f'H2-Cell-{cell_size}'
+            self.outname = f'{self.tag}-Cell-{cell_size}'
         else: 
-            self.outname = f'H2-Nphi-{self.N_phi}'
+            self.outname = f'{self.tag}-Nphi-{self.N_phi}'
             
         self.pbc = (True, False, False)
             
@@ -300,9 +300,9 @@ class CO_chain(HelicalSystem):
 
         # Create the filename string
         if twist_angle == 0:
-            self.outname = f'CO-Cell-{cell_size}'
+            self.outname = f'{self.tag}-Cell-{cell_size}'
         else: 
-            self.outname = f'CO-Nphi-{self.N_phi}'
+            self.outname = f'{self.tag}-Nphi-{self.N_phi}'
             
         self.pbc = (True, False, False)
             
@@ -368,9 +368,9 @@ class C2H2_chain(HelicalSystem):
 
         # Create the filename string
         if twist_angle == 0:
-            self.outname = f'C2H2-Cell-{cell_size}'
+            self.outname = f'{self.tag}-Cell-{cell_size}'
         else: 
-            self.outname = f'C2H2-Nphi-{self.N_phi}'
+            self.outname = f'{self.tag}-Nphi-{self.N_phi}'
             
         self.Atoms = self.build(a, b, c, c0, h0, l, twist_angle)
             
