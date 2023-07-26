@@ -114,7 +114,7 @@ def calc_bandstructure(system, npoints, unfold=False):
     Using fixed precalculated groundstate density read from .gpw. 
     Converged band structure written to .json file.
     Calculation details written to .log file. 
-    Unfolding of supercell calculations.
+    Unfolding of supercell calculations. (But not untwisting yet!)
     '''
     
     ########## Establish file names for calculation i/o ##########
