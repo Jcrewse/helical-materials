@@ -137,17 +137,23 @@ class hBN(HelicalSystem):
         else:
             try:
                 # Open the pickle file created from supercell.py
-                # This contains supercell lattice information we need for unfolding
                 pickle_name = f'{self.sc_outname}_SC.pckl'
                 res = pickle.load(open(pickle_name, 'rb'))
                 
+                # Retrieve the supercell transform matrix for supercell layer
+                M = res.M()
+                
+                # Convert to 3x3 matrix including z-axis transform
+                self.supercell_transform = np.array([[M[0][0], M[0][1], 0],
+                                                     [M[1][0], M[1][1], 0], 
+                                                     [0, 0, self.N_phi]])
+                
                 # Save the supercell as a POSCAR file
-                # To be opened by ASE for creating the Atoms object
                 poscar_name = f'{self.sc_outname}_SC.POSCAR'
                 res.superlattice().save_POSCAR(poscar_name)
                 
                 # Read the POSCAR file in an Atoms object, set pbc
-                hbn = io.read(f'{self.sc_outname}_SC.POSCAR', format = 'vasp')
+                hbn = io.read(poscar_name, format = 'vasp')
                 hbn.set_pbc((True, True, True))
                 
                 return hbn
