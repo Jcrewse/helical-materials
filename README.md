@@ -26,7 +26,7 @@ For a 1D chain system:
 ```python
 class YourSystem(HelicalSystem):
 
-        def __init__(self, variable1, variable2):
+        def __init__(self, init_vars):
 
             # Label for output files, plots
             self.tag = 'YourTag'
@@ -47,7 +47,7 @@ class YourSystem(HelicalSystem):
             # Create the ASE.Atoms object
             self.Atoms = self.build(build_variables)
 
-        def build(self, build_variables):
+        def build(self, build_vars):
 
             # Create a generator of angles for producing atomic positions
             angles = [n*twist_angle for n in range(self.N_phi)]
@@ -69,6 +69,90 @@ class YourSystem(HelicalSystem):
 ```
 
 ### Bulk systems: System creation with `supercell.py`
-When creating a 3D system (e.g. twisted hexagonal boron nitride) the system creation process becomes a bit more complicate. For a system with $N_\phi$ layers, we need to create a supercell of $N_\phi$ layers that may be used as the new unit cell of the unit cell of the twisted system. In this software, we use a previously built package known as [`supercell-core`](https://github.com/tnecio/supercell-core) to calculate the lattice vectors of the supercell. See the linked GitHub for access to the relevant paper and examples of package usage. Here I will only describe the functionality of our script `supercell.py` and how it interacts with the rest of the package.
+When creating a 3D system (e.g. twisted hexagonal boron nitride) the system creation process becomes a bit more complicate. For a system with $N_\phi$ layers, we need to create a supercell of $N_\phi$ layers that may be used as the new unit cell of the unit cell of the twisted system. In this software, we use a previously built package known as `supercell-core` to calculate the lattice vectors of the supercell. See the [GitHub](https://github.com/tnecio/supercell-core) for access to the relevant paper and examples of package usage. Here I will only describe the functionality of our script `supercell.py` and how it interacts with the rest of the package.
 
-The supercell determination process is unfortunately very memory intensive in `supercell-core` and runs into issues when we attempt to calculate the supercell at runtime on Carbon. Therefore, we have offloaded the supercell creation process from the main script and it is intended to be run locally. 
+The supercell determination process is unfortunately very memory intensive in `supercell-core` and runs into issues when we attempt to calculate the supercell in a parallel calculation on Carbon. Therefore, we have offloaded the supercell creation process from the main script, and it is intended to be run locally prior to GPAW calculations. 
+
+`supercell.py` determines the supercell and outputs the results in the form of three files:  
+
+- POSCAR file: Contains atom types, positions and supercell vector information. For more information on the POSCAR formatting see the [VASP wiki](https://www.vasp.at/wiki/index.php/POSCAR).
+- Pickle (.pckl) file: Serialized `heterostructure` object. Contains all information on the results of the supercell calculation. 
+- Log file: Human readable output of supercell results. 
+
+Once you have run `supercell.py` for the system of interest use the filename of the output files as an input argument to the bulk system class 
+
+```python
+system = systems.YourSystem('YourSystemFile')
+```
+
+### Example: twisted hexagonal boron nitride
+
+```python
+class hBN(HelicalSystem):
+    '''
+    Class defining hexagonal Boron Nitride with helical twist angle between layers.
+    '''
+    
+    def __init__(self, twist_angle = 0, cell_size = 1, layers = None, max_el = 6):
+        super().__init__(twist_angle, cell_size, layers)
+        
+        # System tag
+        self.tag = 'hBN'
+        
+        # Lattice parameters
+        self.a = self.b = 1.42
+        self.c = 3.28
+        
+        # Supercell parameters
+        self.max_el = max_el
+
+        # Output file name
+        self.outname = f'{self.tag}-Nphi-{self.N_phi}'
+        self.sc_outname = f'{self.outname}_maxel-{self.max_el}'
+
+        # Band structure parameters
+        self.k_path = 'GMKGALH' # Band paths as a string of relevant high-symmetry points
+        self.n_bands = 14       # Number of bands to calculate
+        self.emin = -7.5        # Min energy for band struct plots
+        self.emax = 15          # Max
+        
+        # Periodic boundary conditions 
+        self.pbc = (True, True, True)
+        
+        # Create the ASE.Atoms object
+        self.Atoms = self.build(self.a, self.c)
+        
+    def build(self, a, c):
+        
+        if (self.twist_angle == 0 and self.cell_size == 1 and self.layers == None): 
+            # Create the unit cell of untwisted system
+            return Atoms(['B', 'N'],
+                        positions = [(0,0,0),
+                                     (a,0,0)],
+                        cell = [(3*a/2, sqrt(3)*a/2, 0),
+                                (3*a/2, -sqrt(3)*a/2, 0),
+                                (0, 0, c)],
+                        pbc = self.pbc)
+            
+        else:
+            try:
+                # Open the pickle file created from supercell.py
+                # This contains supercell lattice information we need for unfolding
+                pickle_name = f'{self.sc_outname}_SC.pckl'
+                res = pickle.load(open(pickle_name, 'rb'))
+                
+                # Save the supercell as a POSCAR file
+                # To be opened by ASE for creating the Atoms object
+                poscar_name = f'{self.sc_outname}_SC.POSCAR'
+                res.superlattice().save_POSCAR(poscar_name)
+                
+                # Read the POSCAR file in an Atoms object, set pbc
+                hbn = io.read(f'{self.sc_outname}_SC.POSCAR', format = 'vasp')
+                hbn.set_pbc((True, True, True))
+                
+                return hbn
+            # If the pickle file has not yet been made, warn user
+            except (FileNotFoundError):
+               print(f'No pickle file ({self.outname}_SC.pckl) for supercell. Run supercell.py first.')
+```
+
