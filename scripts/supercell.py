@@ -27,11 +27,11 @@ def count_layer_atoms(poscar_file):
     return layer_dict
  
 # User inputs
-tag = 'hBN'
-N_phi  = 3
-max_el = 25
+tag = 'hBN'    # Identifier for output files
+N_phi  = 3     # Number of layers to create supercell for
+max_el = 12    # Maximum extent of supercell lattice vectors
 
-# Defining some lattice constants
+# Lattice constants
 a = 1.42
 c = 3.28
 
@@ -42,7 +42,7 @@ log_file = f'{file_name}.log'
 pickle_file = f'{file_name}.pckl'
 
 # Defining the lattice unit cell 
-# THIS NEEDS TO BE GENERALIZED TO THINGS NO ISOSTRUCTURAL TO GRAPHENE
+# THIS NEEDS TO BE GENERALIZED TO THINGS NOT ISOSTRUCTURAL TO GRAPHENE
 lattice = sc.lattice()
 lattice.set_vectors([3*a/2, a*sqrt(3)/2, 0], [3*a/2, -a*sqrt(3)/2, 0], [0, 0, c])
 lattice.add_atom("B", (0, 0, 0)).add_atom("N", (a, 0, 0))
