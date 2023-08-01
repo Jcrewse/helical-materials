@@ -67,7 +67,7 @@ class hBN(HelicalSystem):
         Graphene and h-BN are isostructural compounds.
     '''
     
-    def __init__(self, twist_angle = 0, cell_size = 1, layers = None, max_el = 6):
+    def __init__(self, twist_angle = 0, cell_size = 1, layers = None, max_el = 6, sc_file = None):
         super().__init__(twist_angle, cell_size, layers)
         
         # System tag
@@ -82,7 +82,6 @@ class hBN(HelicalSystem):
 
         # Output file name
         self.outname = f'{self.tag}-Nphi-{self.N_phi}'
-        self.sc_outname = f'{self.outname}_maxel-{self.max_el}'
 
         # Band structure parameters
         self.k_path = 'GMKGALH'
@@ -92,9 +91,9 @@ class hBN(HelicalSystem):
         
         self.pbc = (True, True, True)
         
-        self.Atoms = self.build(self.a, self.c)
+        self.Atoms = self.build(self.a, self.c, self.sc_file)
         
-    def build(self, a, c):
+    def build(self, a, c, sc_file):
         
         if (self.twist_angle == 0 and self.cell_size == 1 and self.layers == None): 
             # Create the unit cell
@@ -109,7 +108,7 @@ class hBN(HelicalSystem):
         else:
             try:
                 # Open the pickle file created from supercell.py
-                pickle_name = f'{self.sc_outname}_SC.pckl'
+                pickle_name = self.sc_file
                 res = pickle.load(open(pickle_name, 'rb'))
                 
                 # Retrieve the supercell transform matrix for supercell layer
