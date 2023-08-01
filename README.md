@@ -13,6 +13,14 @@ supercell-core `pip3 install supercell-core --user`
 ## Usage
 The main script is `controller.py` from which you may select the system you would like to simulate, set the relevant parameters, and choose the calculations you would like to perform. The list of parameters in `controller.py` is not exhaustive. For a full description see: [GPAW basics](https://wiki.fysik.dtu.dk/gpaw/documentation/basic.html)
 
+Running the program on your machine is then very simple...  
+`python3 /path/to/controller.py`
+
+### Parallel calculations
+Running things in parallel locally is well documented in the [GPAW documentation](https://wiki.fysik.dtu.dk/gpaw/documentation/parallel_runs/parallel_runs.html).  
+
+Parallel runs on Carbon require submitting via the job scheduler. Information of the [Carbon wiki on job management](https://wiki.anl.gov/cnm/HPC/Submitting_and_Managing_Jobs) is rather exhaustive. The script `job-script.pbs` is another example of a working submission script. 
+
 ## Internals
 The main portion of the calculations are contained in `GPAWcalculator.py`. This file contains functions that when called from `controller.py`, perform the relevant steps in GPAW to carry out the calculations. 
 
@@ -79,11 +87,15 @@ The supercell determination process is unfortunately very memory intensive in `s
 - Pickle (.pckl) file: Serialized `heterostructure` object. Contains all information on the results of the supercell calculation. 
 - Log file: Human readable output of supercell results. 
 
-Once you have run `supercell.py` for the system of interest use the filename of the output files as an input argument to the bulk system class 
+Once you have run `supercell.py` for the system of interest, initialize the system by inputting the appropriate parameters
+
+e.g. If we calculate a supercell for hexagonal boron nitride with a twist angle of $\phi = 2\pi/3$ and a maximum extent of `max_el = 12` we will end up with a file `hBN-Nphi-3_maxel-12_SC.pckl`. Then we may intialize the system in `controller.py` as
 
 ```python
-system = systems.YourSystem('YourSystemFile')
+system = systems.YourSystem(twist_angle = 2*pi/3, max_el = 12)
 ```
+
+This will open the appropriate `.pckl` file for the supercell of interest and return the ASE.Atoms object for the system.
 
 ### Example: twisted hexagonal boron nitride
 
