@@ -76,7 +76,7 @@ class YourSystem(HelicalSystem):
 ### Bulk systems: System creation with `supercell.py`
 When creating a 3D system (e.g. twisted hexagonal boron nitride) the system creation process becomes a bit more complicate. For a system with $N_\phi$ layers, we need to create a supercell of $N_\phi$ layers that may be used as the new unit cell of the unit cell of the twisted system. In this software, we use a previously built package known as `supercell-core` to calculate the lattice vectors of the supercell. See the [GitHub](https://github.com/tnecio/supercell-core) for access to the relevant paper and examples of package usage. Here I will only describe the functionality of our script `supercell.py` and how it interacts with the rest of the package.
 
-The supercell determination process is unfortunately very memory intensive in `supercell-core` and runs into issues when we attempt to calculate the supercell in a parallel calculation on Carbon. Therefore, we have offloaded the supercell creation process from the main script, and it is intended to be run locally prior to GPAW calculations. 
+The supercell determination process is unfortunately very memory intensive in `supercell-core` and runs into issues when we attempt to calculate the supercell in a parallel calculation on Carbon. Therefore, we have offloaded the supercell creation process from the main script, and it is intended to be run prior to parallel GPAW calculations. 
 
 `supercell.py` determines the supercell and outputs the results in the form of three files:  
 
