@@ -21,9 +21,6 @@ Running things in parallel locally is well documented in the [GPAW documentation
 
 Parallel runs on Carbon require submitting via the job scheduler. Information of the [Carbon wiki on job management](https://wiki.anl.gov/cnm/HPC/Submitting_and_Managing_Jobs) is rather exhaustive. The script `job-script.pbs` is another example of a working submission script. 
 
-## Internals
-The main portion of the calculations are contained in `GPAWcalculator.py`. This file contains functions that when called from `controller.py`, perform the relevant steps in GPAW to carry out the calculations. 
-
 ## Systems
 GPAW performs calculations on ASE.Atoms objects. We define a system in the `systems.py` file. Each system is a superclass of an Atoms object with additional attributes that characterize the helical symmetries (e.g. twist angle, supercell transforms matrix, etc.) as well as relevant energies, forces, and system identifies tags.
 
@@ -174,3 +171,6 @@ class hBN(HelicalSystem):
                print(f'No pickle file ({self.outname}_SC.pckl) for supercell. Run supercell.py first.')
 ```
 
+## Example Calculations
+### Carbon Monoxide chain
+In this example we consider a chain of CO molecules. 
