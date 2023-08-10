@@ -51,7 +51,6 @@ class HelicalSystem():
     def show(self, repeat = (1,1,1)):
         view(self.Atoms, repeat)
         return
-
     
 # Hexagonal Boron Nitride #####################################################
 class hBN(HelicalSystem):
