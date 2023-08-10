@@ -8,7 +8,8 @@ Note: This package is designed for use on the [Argonne Carbon Cluster](https://w
 2. Install dependencies:  
 GPAW `conda install -c conda-forge gpaw` (the pre-installed GPAW on Carbon is not compatible)  
 supercell-core `pip3 install supercell-core --user`
-3. Install package (from): `pip3 install -e .`
+3. Install package: `pip3 install -e .`  
+   This command installs the package as 'editable' so that modifications to source files do not require re-installing.
 
 ## Usage
 The main script is `controller.py` from which you may select the system you would like to simulate, set the relevant parameters, and choose the calculations you would like to perform. The list of parameters in `controller.py` is not exhaustive. For a full description see: [GPAW basics](https://wiki.fysik.dtu.dk/gpaw/documentation/basic.html)
@@ -42,7 +43,8 @@ class YourSystem(HelicalSystem):
             self.c = #lattice_constant3
 
             # Bandstructure parameters
-            self.
+            self.k_path = # String of of special points in BZ (e.g. 'GMKGALH' is a common path for hexagonal Brillouin zones)
+            self.n_bands = # Number of bands to calculate
             self.emin = # Min for band structure plots
             self.emax = # Max
 
