@@ -16,8 +16,8 @@ ti = time.perf_counter()
 # Calculation parameters ######################################################
 # Parameters not list are GPAW calc.default_parameters
 params = {
-    'mode'        : PW(500),             # Calculation mode        
-    'kpts'        : (5,5,5),             # k-points sampled in periodic sys
+    'mode'        : PW(300),             # Calculation mode        
+    'kpts'        : (5,1,1),             # k-points sampled in periodic sys
     'random'      : True,                # Random guess of WF's in empty bands
     'xc'          : 'PBE',               # Exchange-correlation function
     'occupations' : FermiDirac(0.01),    # Occupation smearing (input # = kT)
@@ -26,11 +26,12 @@ params = {
 ###############################################################################
 
 # Create System ###############################################################
-system = systems.hBN(twist_angle = 2*pi/4, max_el=15)
+system = systems.hBN(twist_angle = 2*pi/3, max_el=12)
+#system = systems.H2_chain()
 #system.show(repeat=(1,1,1))
 
 # Ground State Calculations ###################################################
-if world.rank == 0: 
+if world.rank == 0: # Only output to user on one node
     print('\n========== CALCULATING GROUND STATE ==========\n')
 calc_groundstate(system, params, restart=False)
     
