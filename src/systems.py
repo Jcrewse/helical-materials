@@ -168,6 +168,10 @@ class H2_chain(HelicalSystem):
         self.pbc = (True, False, False)
             
         self.Atoms = self.build(a, b, c, d, l, twist_angle)
+        
+        # Create an Atoms object of the unit cell for unfolding procedure
+        if not (twist_angle == 0):
+            self.Atoms_unit = self.build(a, b, c, d, l, twist_angle = 0)
             
         return None
     
